@@ -1,0 +1,57 @@
+title: "[Implementation] "
+labels: ["implementation"]
+body:
+  - type: markdown
+    attributes:
+      value: "## Implementation Reason"
+  - type: textarea
+    attributes:
+      label: "Implementation Reason"
+      description: "Why did you decide to implement this template?"
+      placeholder: |
+        I implemented this template repo to provide a better developer experience when creating python repositories.
+      render: markdown
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "## New Features"
+  - type: textarea
+    attributes:
+      label: "Features Added To The Template"
+      description: "What features did you add to this template?"
+      placeholder: |
+        1. Hello
+        2. World
+      render: markdown
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: "## URL To Implementation"
+  - type: input
+    attributes:
+      label: "Template URL"
+      description: "A URL pointing to the template"
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "## Compatible Templating Tooling"
+  - type: checkboxes
+    attributes:
+      label: "Implementation Compatible Tooling"
+      options:
+        - label: Giter 8
+        - label: GitHub Templates
+        - label: GitLab Templates
+  - type: markdown
+    attributes:
+      value: "## Anything Else"
+  - type: textarea
+    attributes:
+      label: "Anything Else You'd Like To Add?"
+      description: "Feel free to add any addiitonal information here"
+      render: markdown
+    validations:
+      required: false

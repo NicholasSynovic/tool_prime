@@ -1,0 +1,40 @@
+name: Build And Release On Tag
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest commit
+        uses: actions/checkout@v4
+        with:
+            show-progress: true
+            lfs: false
+
+      - name: Setup Python 3.10 x64
+        uses: actions/setup-python@v5
+        with:
+            python-version: '3.10'
+            architecture: 'x64'
+
+      - name: Build the project
+        run: |
+          pip install pre-commit
+          make create-dev
+          source env/bin/activate
+          make build
+          make package
+
+      - name: Release the project
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/src

@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "src"
+version = "0.0.0"
+description = "Hello World"
+license = "GNU Affero"
+authors = ["Nicholas M. Synovic <nicholas.synovic@gmail.com>"]
+readme = "README.md"
+homepage = "https://github.com/NicholasSynovic/template_python"
+repository = "https://github.com/NicholasSynovic/template_python"
+keywords = ["Template"]
+classifiers = ["Development Status :: 1 - Planning"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,23 @@
+title: "[Request] "
+labels: ["feature-request"]
+body:
+  - type: markdown
+    attributes:
+      value: "## Feature"
+  - type: textarea
+    attributes:
+      label: "Feature Request"
+      description: "What feature would you like added to this template?"
+      render: markdown
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "## Feature Links"
+  - type: textarea
+    attributes:
+      label: "Links To Feature"
+      description: "Please add relevant links to the feature if applicable"
+      render: markdown
+    validations:
+      required: false

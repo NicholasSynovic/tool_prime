@@ -1,0 +1,45 @@
+root = true
+
+# Settings for every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+# Python files
+[*.py]
+indent_style = space
+indent_size = 4
+
+# Makefiles
+[Makefile]
+indent_style = tab
+
+# JSON, YAML, TOML files
+[{*.json, *.yml, *.yaml, *.toml}]
+indent_style = space
+
+# YAML files
+[{*.yml, *.yaml}]
+indent_size = 2
+
+# JSON files
+[*.json]
+trim_trailing_whitespace = false
+indent_size = 4
+
+# C, CPP, H files
+[{*.c, *.cpp, *.h}]
+indent_style = space
+indent_size = 4
+
+# Markdown
+[*.md]
+indent_style = space
+indent_size = 2
+
+# CODEOWNERS
+[CODEOWNERS]
+indent_style = space
+indent_size = 4
