@@ -5,7 +5,7 @@ from src.cli import CLI
 
 def main() -> None:
     cli: CLI = CLI()
-    ns: Namespace = cli.parse()
+    ns: Namespace = cli.parse_args()
     print(ns)
 
 

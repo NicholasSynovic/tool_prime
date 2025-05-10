@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, Namespace, _SubParsersAction
+from os import getcwd
 from pathlib import Path
 
 import src
@@ -42,7 +43,7 @@ class CLI:
             "-i",
             "--input",
             nargs=1,
-            default=Path("."),
+            default=Path(getcwd()),
             required=False,
             help="Path to project to analyze",
             dest="vcs.input",
@@ -51,7 +52,7 @@ class CLI:
             "-o",
             "--output",
             nargs=1,
-            default=Path("./prime.sqlite3"),
+            default=Path(getcwd() + "/prime.sqlite3"),
             required=False,
             help="Path to output SQLite3",
             dest="vcs.output",
