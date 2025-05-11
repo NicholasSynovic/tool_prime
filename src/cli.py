@@ -41,7 +41,6 @@ class CLI:
             "-i",
             "--input",
             nargs=1,
-            default=Path(getcwd()),
             required=False,
             help="Path to project to analyze",
             dest="vcs.input",

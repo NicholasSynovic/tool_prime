@@ -85,7 +85,7 @@ class Git(VersionControlSystem):
                         "co_authors": [
                             co_author.name for co_author in commit.co_authors
                         ],
-                        "co_authors_email": [
+                        "co_author_emails": [
                             co_author.email for co_author in commit.co_authors
                         ],
                         "commit_hash": commit.hexsha,

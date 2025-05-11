@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Any, Iterator, List, Tuple
 
 from git import Commit
-from pandas import DataFrame
+from pandas import DataFrame, Series
+from progress.bar import Bar
 
 from src.api.db import DB
 from src.api.vcs import Git
@@ -25,6 +26,61 @@ def _removeDuplicateDFRows(df: DataFrame, column: str) -> None:
         inplace=True,
         ignore_index=True,
     )
+
+
+def _dfReplaceValueWithIndexReference(
+    df1: DataFrame,
+    df2: DataFrame,
+    df1Col: str,
+    df2Col: str,
+) -> DataFrame:
+    """
+    Replaces the values in DataFrame `df1` in column `df1Col` by the index of the values in DataFrame `df2` in column `df2Col`. # noqa: E501
+
+    Returns DataFrame `df1`
+    """
+    value_to_index = df2.reset_index().set_index(df2Col)["index"].to_dict()
+
+    df1 = df1.copy()
+    df1[df1Col] = df1[df1Col].map(value_to_index)
+    return df1
+
+
+def _dfReplaceListValueWithIndexReference(
+    df1: DataFrame,
+    df2: DataFrame,
+    df1Col: str,
+    df2Col: str,
+) -> DataFrame:
+    """
+    Replace the values stored in a List in DataFrame `df1` in column `df1Col` by the index of the values in DataFrame `df2` in column `df2Col`. # noqa: E501
+
+    Returns DataFrame `df1`
+    """
+    value_to_index = df2.reset_index().set_index(df2Col)["index"].to_dict()
+    df1 = df1.copy()
+
+    with Bar(f"Updating values in ''{df1Col}''...", max=df1.shape[0]) as bar:
+        idx: int
+        row: Series
+        for idx, row in df1.iterrows():
+            value_list: List[Any] = row[df1Col]
+            new_list: List[dict[str, any]] = []
+
+            for value in value_list:
+                replacement_index = value_to_index.get(value)
+                new_list.append({df2Col: replacement_index})
+
+            df1.at[idx, df1Col] = new_list
+            bar.next()
+
+    df1[df1Col] = df1[df1Col].apply(
+        lambda x: (
+            [{df2Col: None}] if isinstance(x, list) and len(x) == 0 else x
+        )  # noqa: E501
+    )
+
+    return df1
 
 
 def git(repo: Path) -> DataFrame:
@@ -50,9 +106,55 @@ def storeRevisionDF(df: DataFrame, db: DB) -> None:
     _removeDuplicateDFRows(df=authors, column="author_email")
     _removeDuplicateDFRows(df=committers, column="committer_email")
 
-    db.write_df(df=commitHashes, table="commit_hashes")
-    db.write_df(df=authors, table="authors")
-    db.write_df(df=committers, table="committers")
+    df = _dfReplaceValueWithIndexReference(
+        df1=df,
+        df2=commitHashes,
+        df1Col="commit_hash",
+        df2Col="commit_hash",
+    )
+    df = _dfReplaceValueWithIndexReference(
+        df1=df,
+        df2=authors,
+        df1Col="author_email",
+        df2Col="author_email",
+    )
+    df = _dfReplaceValueWithIndexReference(
+        df1=df,
+        df2=committers,
+        df1Col="committer_email",
+        df2Col="committer_email",
+    )
+
+    df = _dfReplaceListValueWithIndexReference(
+        df1=df,
+        df2=authors,
+        df1Col="co_author_emails",
+        df2Col="author_email",
+    )
+
+    df = _dfReplaceListValueWithIndexReference(
+        df1=df,
+        df2=commitHashes,
+        df1Col="parents",
+        df2Col="commit_hash",
+    )
+
+    df.drop(columns=["author", "committer"], inplace=True)
+    df.rename(
+        columns={
+            "author_email": "author",
+            "co_author_emails": "co_authors",
+            "committer_email": "committer",
+            "parents": "parent_hashes",
+        },
+        inplace=True,
+    )
+
+    print(df.columns)
+
+    # db.write_df(df=commitHashes, table="commit_hashes")
+    # db.write_df(df=authors, table="authors")
+    # db.write_df(df=committers, table="committers")
 
 
 def main() -> None:
@@ -66,7 +168,7 @@ def main() -> None:
     match nsKey:
         case "vcs":
             db = DB(db_path=ns["vcs.output"])
-            df: DataFrame = git(repo=ns["vcs.input"])
+            df: DataFrame = git(repo=ns["vcs.input"][0])
         case _:
             sys.exit(1)
 
