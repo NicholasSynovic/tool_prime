@@ -37,9 +37,9 @@ def storeRevisionDF(df: DataFrame, db: DB) -> None:
         ignore_index=True,
     )
 
-    print(commitHashes)
-    print(authors)
-    print(committers)
+    db.write_df(df=commitHashes, table="commit_hashes")
+    db.write_df(df=authors, table="authors")
+    db.write_df(df=committers, table="committers")
 
 
 def main() -> None:

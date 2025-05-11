@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pandas
+from pandas import DataFrame
 from sqlalchemy import (
     Column,
     Engine,
@@ -42,6 +44,22 @@ class DB:
         )
 
         self.metadata.create_all(bind=self.engine, checkfirst=True)
+
+    def write_df(self, df: DataFrame, table: str) -> None:
+        df.to_sql(
+            name=table,
+            con=self.engine,
+            if_exists="append",
+            index=True,
+            index_label="id",
+        )
+
+    def read_table(self, table: str) -> DataFrame:
+        return pandas.read_sql_table(
+            table_name=table,
+            con=self.engine,
+            index_col="id",
+        )
 
 
 if __name__ == "__main__":
