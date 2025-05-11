@@ -30,6 +30,15 @@ class DB:
             self.metadata,
             Column("id", Integer, primary_key=True, autoincrement=True),
             Column("author", String, nullable=False),
+            Column("author_email", String, nullable=False),
+        )
+
+        _: Table = Table(
+            "committers",
+            self.metadata,
+            Column("id", Integer, primary_key=True, autoincrement=True),
+            Column("committer", String, nullable=False),
+            Column("committer_email", String, nullable=False),
         )
 
         self.metadata.create_all(bind=self.engine, checkfirst=True)
