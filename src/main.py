@@ -1,4 +1,5 @@
 import sys
+from json import dumps
 from pathlib import Path
 from typing import Any, Iterator, List, Tuple
 
@@ -80,6 +81,8 @@ def _dfReplaceListValueWithIndexReference(
         )  # noqa: E501
     )
 
+    df1[df1Col] = df1[df1Col].apply(lambda x: dumps(obj=x))
+
     return df1
 
 
@@ -150,11 +153,9 @@ def storeRevisionDF(df: DataFrame, db: DB) -> None:
         inplace=True,
     )
 
-    print(df.columns)
-
-    # db.write_df(df=commitHashes, table="commit_hashes")
-    # db.write_df(df=authors, table="authors")
-    # db.write_df(df=committers, table="committers")
+    db.write_df(df=commitHashes, table="commit_hashes")
+    db.write_df(df=authors, table="authors")
+    db.write_df(df=committers, table="committers")
 
 
 def main() -> None:

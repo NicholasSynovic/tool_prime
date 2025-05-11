@@ -1,5 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
+from datetime import timezone
 from os import getcwd
 from pathlib import Path
 from typing import Any, Iterator, List, Tuple
@@ -65,7 +66,13 @@ class Git(VersionControlSystem):
 
     def get_revisions(self) -> Tuple[Iterator[Commit], int]:
         revisionCount: int = sum(1 for _ in self.repo.iter_commits())
-        return (self.repo.iter_commits(reverse=True), revisionCount)
+        return (
+            self.repo.iter_commits(
+                reverse=True,
+                date="raw",
+            ),
+            revisionCount,
+        )
 
     def parse_revisions(
         self,
@@ -80,8 +87,9 @@ class Git(VersionControlSystem):
                     {
                         "author": commit.author.name,
                         "author_email": commit.author.email,
-                        "author_tz_offset": commit.author_tz_offset,
-                        "authored_datetime": commit.authored_datetime,
+                        "authored_datetime": commit.authored_datetime.astimezone(  # noqa: E501
+                            tz=timezone.utc
+                        ),
                         "co_authors": [
                             co_author.name for co_author in commit.co_authors
                         ],
@@ -89,10 +97,11 @@ class Git(VersionControlSystem):
                             co_author.email for co_author in commit.co_authors
                         ],
                         "commit_hash": commit.hexsha,
-                        "committed_datetime": commit.committed_datetime,
+                        "committed_datetime": commit.committed_datetime.astimezone(  # noqa: E501
+                            tz=timezone.utc
+                        ),
                         "committer": commit.committer.name,
                         "committer_email": commit.committer.email,
-                        "committer_tz_offset": commit.committer_tz_offset,
                         "encoding": commit.encoding,
                         "gpgsign": commit.gpgsig,
                         "message": commit.message,
