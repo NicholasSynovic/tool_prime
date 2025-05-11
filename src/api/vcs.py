@@ -39,6 +39,7 @@ class VersionControlSystem(ABC):
     def get_revisions(self) -> Tuple[Any, int]:
         """
         Abstract method to retrieve revisions and the number of revisions.
+        Revisions are retrieved from the oldest revision to the newest.
         Subclasses must implement this method.
         """
         pass
@@ -64,7 +65,7 @@ class Git(VersionControlSystem):
 
     def get_revisions(self) -> Tuple[Iterator[Commit], int]:
         revisionCount: int = sum(1 for _ in self.repo.iter_commits())
-        return (self.repo.iter_commits(), revisionCount)
+        return (self.repo.iter_commits(reverse=True), revisionCount)
 
     def parse_revisions(
         self,

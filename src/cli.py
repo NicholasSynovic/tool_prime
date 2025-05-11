@@ -12,8 +12,6 @@ class CLI:
     """
 
     def __init__(self) -> None:
-        self.destCommands: set[str] = {"vcs"}
-
         self.parser: ArgumentParser = ArgumentParser(
             prog=src.PROG,
             description=src.DESCRIPTION,
