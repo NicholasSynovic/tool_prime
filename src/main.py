@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Any, Iterator, Tuple
+from typing import Any, Iterator, List, Tuple
 
 from git import Commit
 from pandas import DataFrame
@@ -10,6 +10,23 @@ from src.api.vcs import Git
 from src.cli import CLI
 
 
+def _copyDFColumns(df: DataFrame, columns: List[str]) -> DataFrame:
+    return df[columns].copy()
+
+
+def _removeDuplicateDFRows(df: DataFrame, column: str) -> None:
+    """
+    Edits DataFrame in place
+    """
+    df.sort_values(by=column, inplace=True)
+    df.drop_duplicates(
+        subset=column,
+        keep="first",
+        inplace=True,
+        ignore_index=True,
+    )
+
+
 def git(repo: Path) -> DataFrame:
     git: Git = Git(repo_path=repo)
     revisions: Tuple[Iterator[Commit], int] = git.get_revisions()
@@ -17,25 +34,21 @@ def git(repo: Path) -> DataFrame:
 
 
 def storeRevisionDF(df: DataFrame, db: DB) -> None:
-    commitHashes: DataFrame = df[["commit_hash"]]
-
-    authors: DataFrame = df[["author", "author_email"]]
-    authors.sort_values(by="author_email", inplace=True)
-    authors.drop_duplicates(
-        subset="author_email",
-        keep="first",
-        inplace=True,
-        ignore_index=True,
+    commitHashes: DataFrame = _copyDFColumns(
+        df=df,
+        columns=["commit_hash"],
+    )
+    authors: DataFrame = _copyDFColumns(
+        df=df,
+        columns=["author", "author_email"],
+    )
+    committers: DataFrame = _copyDFColumns(
+        df=df,
+        columns=["committer", "committer_email"],
     )
 
-    committers: DataFrame = df[["committer", "committer_email"]]
-    committers.sort_values(by="committer_email", inplace=True)
-    committers.drop_duplicates(
-        subset="committer_email",
-        keep="first",
-        inplace=True,
-        ignore_index=True,
-    )
+    _removeDuplicateDFRows(df=authors, column="author_email")
+    _removeDuplicateDFRows(df=committers, column="committer_email")
 
     db.write_df(df=commitHashes, table="commit_hashes")
     db.write_df(df=authors, table="authors")
