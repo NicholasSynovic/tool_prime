@@ -4,7 +4,9 @@ import pandas
 from pandas import DataFrame
 from sqlalchemy import (
     Column,
+    DateTime,
     Engine,
+    ForeignKeyConstraint,
     Integer,
     MetaData,
     String,
@@ -19,28 +21,52 @@ class DB:
         self.engine: Engine = create_engine(url=f"sqlite:///{self.dbPath}")
         self.metadata: MetaData = MetaData()
 
+        self.create_tables()
+
     def create_tables(self) -> None:
         _: Table = Table(
             "commit_hashes",
             self.metadata,
-            Column("id", Integer, primary_key=True, autoincrement=True),
-            Column("commit_hash", String, nullable=False),
+            Column("id", Integer, primary_key=True),
+            Column("commit_hash", String),
         )
 
         _: Table = Table(
             "authors",
             self.metadata,
-            Column("id", Integer, primary_key=True, autoincrement=True),
-            Column("author", String, nullable=False),
-            Column("author_email", String, nullable=False),
+            Column("id", Integer, primary_key=True),
+            Column("author", String),
+            Column("author_email", String),
         )
 
         _: Table = Table(
             "committers",
             self.metadata,
-            Column("id", Integer, primary_key=True, autoincrement=True),
-            Column("committer", String, nullable=False),
-            Column("committer_email", String, nullable=False),
+            Column("id", Integer, primary_key=True),
+            Column("committer", String),
+            Column("committer_email", String),
+        )
+
+        _: Table = Table(
+            "commit_log",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("commit_hash_id", Integer),
+            Column("author_id", Integer),
+            Column("committer_id", Integer),
+            Column("co_author_ids", String),
+            Column("parent_hash_ids", String),
+            Column("authored_datetime", DateTime),
+            Column("committed_datetime", DateTime),
+            Column("encoding", String),
+            Column("message", String),
+            Column("gpgsign", String),
+            ForeignKeyConstraint(
+                ["commit_hash_id"],
+                ["commit_hashes.id"],
+            ),
+            ForeignKeyConstraint(["author_id"], ["authors.id"]),
+            ForeignKeyConstraint(["committer_id"], ["committers.id"]),
         )
 
         self.metadata.create_all(bind=self.engine, checkfirst=True)

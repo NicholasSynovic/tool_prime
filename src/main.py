@@ -142,13 +142,14 @@ def storeRevisionDF(df: DataFrame, db: DB) -> None:
         df2Col="commit_hash",
     )
 
-    df.drop(columns=["author", "committer"], inplace=True)
+    df.drop(columns=["author", "committer", "co_authors"], inplace=True)
     df.rename(
         columns={
-            "author_email": "author",
-            "co_author_emails": "co_authors",
-            "committer_email": "committer",
-            "parents": "parent_hashes",
+            "author_email": "author_id",
+            "co_author_emails": "co_author_ids",
+            "commit_hash": "commit_hash_id",
+            "committer_email": "committer_id",
+            "parents": "parent_hash_ids",
         },
         inplace=True,
     )
@@ -156,6 +157,7 @@ def storeRevisionDF(df: DataFrame, db: DB) -> None:
     db.write_df(df=commitHashes, table="commit_hashes")
     db.write_df(df=authors, table="authors")
     db.write_df(df=committers, table="committers")
+    db.write_df(df=df, table="commit_log")
 
 
 def main() -> None:
@@ -168,7 +170,7 @@ def main() -> None:
     # Extract/compute data to a DataFrame
     match nsKey:
         case "vcs":
-            db = DB(db_path=ns["vcs.output"])
+            db = DB(db_path=ns["vcs.output"][0])
             df: DataFrame = git(repo=ns["vcs.input"][0])
         case _:
             sys.exit(1)

@@ -1,5 +1,4 @@
 from argparse import ArgumentParser, Namespace, _SubParsersAction
-from os import getcwd
 from pathlib import Path
 
 import src
@@ -43,15 +42,16 @@ class CLI:
             nargs=1,
             required=False,
             help="Path to project to analyze",
+            type=Path,
             dest="vcs.input",
         )
         vcsParser.add_argument(
             "-o",
             "--output",
             nargs=1,
-            default=Path(getcwd() + "/prime.sqlite3"),
             required=False,
             help="Path to output SQLite3",
+            type=Path,
             dest="vcs.output",
         )
 
