@@ -118,7 +118,7 @@ class Git(VersionControlSystem):
         data: List[dict] = []
 
         with Bar(
-            self.parseRevisionsBarMessageList[DataFrame],
+            self.parseRevisionsBarMessage[DataFrame],
             max=revisions[1],
         ) as bar:
             commit: Commit
