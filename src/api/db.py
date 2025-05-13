@@ -51,7 +51,7 @@ class DB:
         )
 
         _: Table = Table(
-            "commit_log",
+            "commit_logs",
             self.metadata,
             Column("id", Integer, primary_key=True),
             Column("commit_hash_id", Integer),
