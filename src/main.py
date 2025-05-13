@@ -49,7 +49,7 @@ def main() -> None:
         sys.exit(1)
 
     # Connect to database
-    db: DB = handleDB(ns=ns)
+    db: DB = handleDB(ns=ns, nsKey=nsKey)
 
     # Run subroutines based on command line parser
     match nsKey:
