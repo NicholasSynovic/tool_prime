@@ -8,6 +8,7 @@ from pandas import DataFrame, Series
 from progress.bar import Bar
 
 from src.api.db import DB
+from src.api.types import Authors, CommitHashes, CommitLog, Committers
 from src.api.vcs import Git
 from src.cli import CLI
 
@@ -154,10 +155,14 @@ def storeRevisionDF(df: DataFrame, db: DB) -> None:
         inplace=True,
     )
 
-    db.write_df(df=commitHashes, table="commit_hashes")
-    db.write_df(df=authors, table="authors")
-    db.write_df(df=committers, table="committers")
-    db.write_df(df=df, table="commit_log")
+    db.write_df(
+        df=commitHashes,
+        table="commit_hashes",
+        model=CommitHashes,
+    )
+    db.write_df(df=authors, table="authors", model=Authors)
+    db.write_df(df=committers, table="committers", model=Committers)
+    db.write_df(df=df, table="commit_log", model=CommitLog)
 
 
 def main() -> None:
