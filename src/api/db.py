@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pandas
 from pandas import DataFrame
+from pydantic import BaseModel
 from sqlalchemy import (
     Column,
     DateTime,
@@ -13,6 +14,8 @@ from sqlalchemy import (
     Table,
     create_engine,
 )
+
+from src.api.types import validate_df
 
 
 class DB:
@@ -71,7 +74,9 @@ class DB:
 
         self.metadata.create_all(bind=self.engine, checkfirst=True)
 
-    def write_df(self, df: DataFrame, table: str) -> None:
+    def write_df(self, df: DataFrame, table: str, model: BaseModel) -> None:
+        validate_df(model=model, df=df)
+
         df.to_sql(
             name=table,
             con=self.engine,
@@ -80,12 +85,16 @@ class DB:
             index_label="id",
         )
 
-    def read_table(self, table: str) -> DataFrame:
-        return pandas.read_sql_table(
+    def read_table(self, table: str, model: BaseModel) -> DataFrame:
+        df: DataFrame = pandas.read_sql_table(
             table_name=table,
             con=self.engine,
             index_col="id",
         )
+
+        validate_df(model=model, df=df)
+
+        return df
 
 
 if __name__ == "__main__":
