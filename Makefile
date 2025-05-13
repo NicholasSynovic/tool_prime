@@ -21,6 +21,6 @@ package:
 		--onefile \
 		--add-data ./src/_version:. \
 		--workpath ./pyinstaller \
-		--name src \
+		--name prime \
 		--hidden-import src \
 		src/main.py

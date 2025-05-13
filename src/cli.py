@@ -1,3 +1,4 @@
+import sys
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 from pathlib import Path
 
@@ -15,6 +16,12 @@ class CLI:
             prog=src.PROG,
             description=src.DESCRIPTION,
             epilog=src.EPILOG,
+        )
+        self.parser.add_argument(
+            "-v",
+            "--version",
+            action="version",
+            version=open(file=Path(sys._MEIPASS, "_version")).read().strip(),
         )
 
         self.subparsers: _SubParsersAction[ArgumentParser] = (

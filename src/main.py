@@ -13,7 +13,7 @@ def getNameSpaceKey(ns: dict[str, Any]) -> str:
     return set([key.split(".")[0] for key in ns.keys()]).pop()
 
 
-def handleDB(ns: dict[str, Any]) -> DB | None:
+def handleDB(ns: dict[str, Any], nsKey: str) -> DB | None:
     nsKey: str = getNameSpaceKey(ns=ns)
 
     match nsKey:
@@ -26,8 +26,7 @@ def handleDB(ns: dict[str, Any]) -> DB | None:
 def handleVCS(ns: dict[str, Any], db: DB) -> None:
     vcs: VersionControlSystem | int = identifyVCS(repoPath=ns["vcs.input"][0])
     if vcs == -1:
-        print("ERROR: Repository path is not version controlled.")
-        sys.exit(1)
+        sys.exit(2)
 
     data: dict[str, DataFrame] = parseVCS(vcs=vcs)
 
@@ -44,16 +43,20 @@ def handleVCS(ns: dict[str, Any], db: DB) -> None:
 def main() -> None:
     cli: CLI = CLI()
     ns: dict[str, Any] = cli.parse_args().__dict__
+    try:
+        nsKey: str = getNameSpaceKey(ns=ns)
+    except KeyError:
+        sys.exit(1)
 
     # Connect to database
     db: DB = handleDB(ns=ns)
 
     # Run subroutines based on command line parser
-    match getNameSpaceKey(ns=ns):
+    match nsKey:
         case "vcs":
             handleVCS(ns=ns, db=db)
         case _:
-            sys.exit(2)
+            sys.exit(3)
 
 
 if __name__ == "__main__":
