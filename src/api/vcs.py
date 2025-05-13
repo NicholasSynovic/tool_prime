@@ -212,7 +212,7 @@ def parseVCS(vcs: VersionControlSystem) -> dict[str, DataFrame]:
         df2Col="author_email",
     )
     commitLogDF = replaceDFValueInColumnWithListOfIndexReferences(
-        df1=df,
+        df1=commitLogDF,
         df2=data["commit_hashes"],
         df1Col="parents",
         df2Col="commit_hash",
