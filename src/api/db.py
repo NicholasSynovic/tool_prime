@@ -14,6 +14,7 @@ from sqlalchemy import (
     Table,
     create_engine,
 )
+from sqlalchemy.exc import IntegrityError
 
 from src.api.types import validate_df
 
@@ -74,16 +75,21 @@ class DB:
 
         self.metadata.create_all(bind=self.engine, checkfirst=True)
 
-    def write_df(self, df: DataFrame, table: str, model: BaseModel) -> None:
+    def write_df(self, df: DataFrame, table: str, model: BaseModel) -> bool:
         validate_df(model=model, df=df)
 
-        df.to_sql(
-            name=table,
-            con=self.engine,
-            if_exists="append",
-            index=True,
-            index_label="id",
-        )
+        try:
+            df.to_sql(
+                name=table,
+                con=self.engine,
+                if_exists="append",
+                index=True,
+                index_label="id",
+            )
+        except IntegrityError:
+            return False
+
+        return True
 
     def read_table(self, table: str, model: BaseModel) -> DataFrame:
         df: DataFrame = pandas.read_sql_table(

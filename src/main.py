@@ -1,5 +1,5 @@
 import sys
-from os.path import abspath, isfile
+from os.path import abspath
 from pathlib import Path
 from typing import Any
 
@@ -26,17 +26,10 @@ def handleDB(ns: dict[str, Any], nsKey: str) -> DB | None:
 
 
 def handleVCS(ns: dict[str, Any], db: DB) -> None:
-    # Error if file exists and ''--append'' isn't used
-    if (ns["vcs.append"] is False) and isfile(ns["vcs.output"][0]):
-        print(f"ERROR: {ns['vcs.output'][0]} exists. Use ''--append''")
-        sys.exit(2)
-
-    existingCommits: DataFrame | None = None
-    if ns["vcs.append"]:
-        existingCommits: DataFrame = db.read_table(
-            table="commit_hashes",
-            model=CommitHashes,
-        )
+    existingCommits: DataFrame = db.read_table(
+        table="commit_hashes",
+        model=CommitHashes,
+    )
 
     repoPath: Path = Path(abspath(path=ns["vcs.input"][0]))
     vcs: VersionControlSystem | int = identifyVCS(repoPath=repoPath)

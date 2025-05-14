@@ -61,13 +61,6 @@ class CLI:
             type=Path,
             dest="vcs.output",
         )
-        vcsParser.add_argument(
-            "--append",
-            action="store_true",
-            required=False,
-            help="Append to an existing database",
-            dest="vcs.append",
-        )
 
         return vcsParser
 
