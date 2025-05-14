@@ -160,12 +160,22 @@ def identifyVCS(repoPath: Path) -> VersionControlSystem | int:
         return -1
 
 
-def parseVCS(vcs: VersionControlSystem) -> dict[str, DataFrame]:
+def parseVCS(
+    vcs: VersionControlSystem,
+    previousRevisions: DataFrame | None,
+) -> dict[str, DataFrame]:
     data: dict[str:DataFrame] = {}
 
     # Extract the commit log
     revisions: Tuple[Any, int] = vcs.get_revisions()
     commitLogDF: DataFrame = vcs.parse_revisions(revisions=revisions)
+
+    if isinstance(previousRevisions, DataFrame):
+        commitLogDF = commitLogDF[
+            ~commitLogDF["commit_hash"].isin(
+                previousRevisions["commit_hash"]
+            )  # noqa: E712
+        ]
 
     # Copy static information to output data structure
     data["commit_hashes"] = copyDFColumnsToDF(

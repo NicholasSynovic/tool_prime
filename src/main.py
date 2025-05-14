@@ -1,4 +1,6 @@
 import sys
+from os.path import abspath, isfile
+from pathlib import Path
 from typing import Any
 
 from pandas import DataFrame
@@ -24,11 +26,27 @@ def handleDB(ns: dict[str, Any], nsKey: str) -> DB | None:
 
 
 def handleVCS(ns: dict[str, Any], db: DB) -> None:
-    vcs: VersionControlSystem | int = identifyVCS(repoPath=ns["vcs.input"][0])
+    # Error if file exists and ''--append'' isn't used
+    if (ns["vcs.append"] is False) and isfile(ns["vcs.output"][0]):
+        print(f"ERROR: {ns['vcs.output'][0]} exists. Use ''--append''")
+        sys.exit(2)
+
+    existingCommits: DataFrame | None = None
+    if ns["vcs.append"]:
+        existingCommits: DataFrame = db.read_table(
+            table="commit_hashes",
+            model=CommitHashes,
+        )
+
+    repoPath: Path = Path(abspath(path=ns["vcs.input"][0]))
+    vcs: VersionControlSystem | int = identifyVCS(repoPath=repoPath)
     if vcs == -1:
         sys.exit(2)
 
-    data: dict[str, DataFrame] = parseVCS(vcs=vcs)
+    data: dict[str, DataFrame] = parseVCS(
+        vcs=vcs,
+        previousRevisions=existingCommits,
+    )
 
     db.write_df(
         df=data["commit_hashes"],
