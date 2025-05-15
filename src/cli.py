@@ -31,6 +31,9 @@ class CLI:
         # VCS Subparser
         self.vcs_parser = self.vcs_subparser()
 
+        # size Subparser
+        self.size_parser = self.size_subparser()
+
     def vcs_subparser(self) -> ArgumentParser:
         """
         Defines the VCS subparser with its arguments.
@@ -63,6 +66,39 @@ class CLI:
         )
 
         return vcsParser
+
+    def size_subparser(self) -> ArgumentParser:
+        """
+        Defines the size subparser with its arguments.
+        """
+
+        sizeParser: ArgumentParser = self.subparsers.add_parser(
+            name="size",
+            help="Measure the size of repository by lines of code",
+            prog=f"{src.PROG} size",
+            epilog=src.EPILOG,
+        )
+
+        sizeParser.add_argument(
+            "-i",
+            "--input",
+            nargs=1,
+            required=True,
+            help="Path to project to analyze",
+            type=Path,
+            dest="size.input",
+        )
+        sizeParser.add_argument(
+            "-o",
+            "--output",
+            nargs=1,
+            required=True,
+            help="Path to output SQLite3",
+            type=Path,
+            dest="vcs.output",
+        )
+
+        return sizeParser
 
     def parse_args(self) -> Namespace:
         """
