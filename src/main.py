@@ -6,7 +6,13 @@ from typing import Any
 from pandas import DataFrame
 
 from src.api.db import DB
-from src.api.types import Authors, CommitHashes, CommitLog, Committers
+from src.api.types import (
+    Authors,
+    CommitHashes,
+    CommitLog,
+    Committers,
+    Releases,
+)
 from src.api.vcs import VersionControlSystem, identifyVCS, parseVCS
 from src.cli import CLI
 
@@ -49,6 +55,7 @@ def handleVCS(ns: dict[str, Any], db: DB) -> None:
     db.write_df(df=data["authors"], table="authors", model=Authors)
     db.write_df(df=data["committers"], table="committers", model=Committers)
     db.write_df(df=data["commit_logs"], table="commit_logs", model=CommitLog)
+    db.write_df(df=data["releases"], table="releases", model=Releases)
 
 
 def main() -> None:

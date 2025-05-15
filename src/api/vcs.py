@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from os import getcwd
 from pathlib import Path
 from typing import Any, Iterator, List, Tuple
 
-from git import Commit, Repo
+from git import Commit, Repo, TagReference
 from git.exc import InvalidGitRepositoryError
 from pandas import DataFrame
 from progress.bar import Bar
@@ -57,6 +56,10 @@ class VersionControlSystem(ABC):
         Abstract method to parse a List[Revisions] and extract relevant data
         Subclasses must implement this method.
         """
+        pass
+
+    @abstractmethod
+    def get_release_revisions(self) -> DataFrame:
         pass
 
 
@@ -152,6 +155,22 @@ class Git(VersionControlSystem):
 
         return DataFrame(data=data)
 
+    def get_release_revisions(self) -> DataFrame:
+        data: dict[str, List[str]] = {"commit_hash_id": []}
+
+        tags: List[TagReference] = self.repo.tags
+
+        tagRef: TagReference
+        for tagRef in tags:
+            try:
+                tagRef.commit
+            except ValueError:
+                continue
+
+            data["commit_hash_id"].append(tagRef.commit.hexsha)
+
+        return DataFrame(data=data)
+
 
 def identifyVCS(repoPath: Path) -> VersionControlSystem | int:
     try:
@@ -166,13 +185,20 @@ def parseVCS(
 ) -> dict[str, DataFrame]:
     data: dict[str:DataFrame] = {}
 
-    # Extract the commit log
+    # Extract the commit log and release revisions
     revisions: Tuple[Any, int] = vcs.get_revisions()
+    releasesDF: DataFrame = vcs.get_release_revisions()
     commitLogDF: DataFrame = vcs.parse_revisions(revisions=revisions)
 
+    # Remove previously stored revisions from DataFrames
     if isinstance(previousRevisions, DataFrame):
         commitLogDF = commitLogDF[
             ~commitLogDF["commit_hash"].isin(
+                previousRevisions["commit_hash"]
+            )  # noqa: E712
+        ]
+        releasesDF = releasesDF[
+            ~releasesDF["commit_hash_id"].isin(
                 previousRevisions["commit_hash"]
             )  # noqa: E712
         ]
@@ -194,6 +220,15 @@ def parseVCS(
     )
 
     # Replace commit log information with the index to static DataFrames
+    releasesDF = replaceDFValueInColumnWithIndexReference(
+        df1=releasesDF,
+        df2=data["commit_hashes"],
+        df1Col="commit_hash_id",
+        df2Col="commit_hash",
+    )
+    releasesDF = releasesDF.dropna(how="any", ignore_index=True)
+    releasesDF["commit_hash_id"] = releasesDF["commit_hash_id"].apply(int)
+
     commitLogDF = replaceDFValueInColumnWithIndexReference(
         df1=commitLogDF,
         df2=data["commit_hashes"],
@@ -245,20 +280,7 @@ def parseVCS(
         inplace=True,
     )
 
+    data["releases"] = releasesDF
     data["commit_logs"] = commitLogDF
 
     return data
-
-
-if __name__ == "__main__":
-    git: Git = Git(repo_path=getcwd())
-    revisions: Iterator[Commit] = git.get_revisions()
-
-    df: DataFrame = git.parse_revisions(revisions=revisions)
-
-    df.to_json(
-        path_or_buf="test.json",
-        indent=4,
-        index=False,
-        orient="records",
-    )

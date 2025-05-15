@@ -6,9 +6,12 @@ from pydantic import BaseModel, Field, ValidationError
 
 def validate_df(model: BaseModel, df: DataFrame) -> None:
     def _run(data: Series) -> None:
+        row: dict = data.to_dict()
         try:
-            model(**data.to_dict())
+            model(**row)
         except ValidationError as ve:
+            print(data)
+            print(data.apply(type))
             raise ve
 
     df.apply(_run, axis=1)
@@ -16,6 +19,10 @@ def validate_df(model: BaseModel, df: DataFrame) -> None:
 
 class CommitHashes(BaseModel):
     commit_hash: str = Field(default=..., description="Commit hash")
+
+
+class Releases(BaseModel):
+    commit_hash_id: int = Field(default=..., description="Revision hash")
 
 
 class Authors(BaseModel):

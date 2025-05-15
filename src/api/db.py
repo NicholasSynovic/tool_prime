@@ -36,6 +36,17 @@ class DB:
         )
 
         _: Table = Table(
+            "releases",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("commit_hash_id", String),
+            ForeignKeyConstraint(
+                ["commit_hash_id"],
+                ["commit_hashes.id"],
+            ),
+        )
+
+        _: Table = Table(
             "authors",
             self.metadata,
             Column("id", Integer, primary_key=True),
