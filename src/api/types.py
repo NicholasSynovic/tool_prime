@@ -10,8 +10,6 @@ def validate_df(model: BaseModel, df: DataFrame) -> None:
         try:
             model(**row)
         except ValidationError as ve:
-            print(data)
-            print(data.apply(type))
             raise ve
 
     df.apply(_run, axis=1)
