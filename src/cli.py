@@ -95,7 +95,7 @@ class CLI:
             required=True,
             help="Path to output SQLite3",
             type=Path,
-            dest="vcs.output",
+            dest="size.output",
         )
 
         return sizeParser

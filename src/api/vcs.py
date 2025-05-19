@@ -62,6 +62,14 @@ class VersionControlSystem(ABC):
     def get_release_revisions(self) -> DataFrame:
         pass
 
+    @abstractmethod
+    def checkout_revision(self, revision_hash: str) -> None:
+        pass
+
+    @abstractmethod
+    def checkout_most_recent_revision(self) -> None:
+        pass
+
 
 class Revision:
     def __init__(
@@ -133,9 +141,7 @@ class Git(VersionControlSystem):
                         authoredDatetime=commit.authored_datetime.astimezone(
                             tz=timezone.utc
                         ),
-                        coAuthors=[
-                            co_author.name for co_author in commit.co_authors
-                        ],  # noqa: E501
+                        coAuthors=[co_author.name for co_author in commit.co_authors],  # noqa: E501
                         coAuthorEmails=[
                             co_author.email for co_author in commit.co_authors
                         ],
@@ -171,6 +177,13 @@ class Git(VersionControlSystem):
 
         return DataFrame(data=data)
 
+    def checkout_revision(self, revision_hash: str) -> None:
+        commit: Commit = self.repo.commit(rev=revision_hash)
+        self.repo.git.checkout(commit)
+
+    def checkout_most_recent_revision(self):
+        self.checkout_revision(revision_hash=self.repo.head.commit.hexsha)
+
 
 def identifyVCS(repoPath: Path) -> VersionControlSystem | int:
     try:
@@ -193,14 +206,10 @@ def parseVCS(
     # Remove previously stored revisions from DataFrames
     if isinstance(previousRevisions, DataFrame):
         commitLogDF = commitLogDF[
-            ~commitLogDF["commit_hash"].isin(
-                previousRevisions["commit_hash"]
-            )  # noqa: E712
+            ~commitLogDF["commit_hash"].isin(previousRevisions["commit_hash"])  # noqa: E712
         ]
         releasesDF = releasesDF[
-            ~releasesDF["commit_hash_id"].isin(
-                previousRevisions["commit_hash"]
-            )  # noqa: E712
+            ~releasesDF["commit_hash_id"].isin(previousRevisions["commit_hash"])  # noqa: E712
         ]
 
     # Copy static information to output data structure

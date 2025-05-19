@@ -15,36 +15,64 @@ from src.api.types import (
 )
 from src.api.vcs import VersionControlSystem, identifyVCS, parseVCS
 from src.cli import CLI
+from src.api.size import compute_size_of_repo
 
 
 def getNameSpaceKey(ns: dict[str, Any]) -> str:
     return set([key.split(".")[0] for key in ns.keys()]).pop()
 
 
-def handleDB(ns: dict[str, Any], nsKey: str) -> DB | None:
-    nsKey: str = getNameSpaceKey(ns=ns)
+def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
+    """
+    Connect to the database based on the provided namespace key.
 
-    match nsKey:
+    This function establishes a database connection using the information
+    extracted from the command-line namespace.
+
+    Args:
+        namespace: A dictionary containing command-line arguments.
+        namespace_key: The key indicating the type of database connection required
+            (e.g., "vcs", "size").
+
+    Returns:
+        A DB object representing the established database connection, or None
+        if no suitable connection can be created.
+
+    """
+    match namespace_key:
         case "vcs":
-            return DB(db_path=ns["vcs.output"][0])
+            return DB(db_path=namespace["vcs.output"][0])
+        case "size":
+            return DB(db_path=namespace["size.output"][0])
         case _:
             return None
 
 
-def handleVCS(ns: dict[str, Any], db: DB) -> None:
-    existingCommits: DataFrame = db.read_table(
+def handle_vcs(ns: dict[str, Any], db: DB) -> None:
+    """
+    Process VCS data and store it in the database.
+
+    This function retrieves VCS data from a specified repository,
+    processes it, and stores the results in the database.
+
+    Args:
+        ns: A dictionary containing command-line arguments.
+        db: A DB object representing the database connection.
+
+    """
+    existing_commits_df: DataFrame = db.read_table(
         table="commit_hashes",
         model=CommitHashes,
     )
 
-    repoPath: Path = Path(abspath(path=ns["vcs.input"][0]))
-    vcs: VersionControlSystem | int = identifyVCS(repoPath=repoPath)
+    repository_path: Path = Path(ns["vcs.input"][0]).resolve()
+    vcs: VersionControlSystem | int = identifyVCS(repoPath=repository_path)
     if vcs == -1:
         sys.exit(2)
 
     data: dict[str, DataFrame] = parseVCS(
         vcs=vcs,
-        previousRevisions=existingCommits,
+        previousRevisions=existing_commits_df,
     )
 
     db.write_df(
@@ -58,21 +86,60 @@ def handleVCS(ns: dict[str, Any], db: DB) -> None:
     db.write_df(df=data["releases"], table="releases", model=Releases)
 
 
+def handle_size(ns: dict[str, Any]) -> None:
+    """
+    Compute and store repository size measured in lines of code into a database.
+
+    This function calculates the size of a repository based on lines of code
+    and stores the result in the database.
+
+    Args:
+      ns: A dictionary containing command-line arguments.
+      db: A DB object representing the database connection.
+
+    """
+    # commitsDF: DataFrame = db.read_table(
+    #     table="commit_hashes",
+    #     model=CommitHashes,
+    # )
+
+    repo_path: Path = Path(ns["size.input"][0]).resolve()
+    vcs: VersionControlSystem | int = identifyVCS(repoPath=repo_path)
+    if vcs == -1:
+        sys.exit(2)
+
+    # df: DataFrame = compute_size_of_repo(commitsDF=commitsDF, vcs=vcs)
+
+    # df.shape
+
+
 def main() -> None:
+    """
+    Execute the application based on command-line arguments.
+
+    This function parses command-line arguments, connects to a database,
+    and then executes specific subroutines based on the parsed arguments.
+
+    Args:
+        None
+
+    """
     cli: CLI = CLI()
     ns: dict[str, Any] = cli.parse_args().__dict__
     try:
-        nsKey: str = getNameSpaceKey(ns=ns)
+        namespace_key: str = getNameSpaceKey(ns=ns)
     except KeyError:
         sys.exit(1)
 
     # Connect to database
-    db: DB = handleDB(ns=ns, nsKey=nsKey)
+    db: DB = handle_db(namespace=ns, namespace_key=namespace_key)
 
     # Run subroutines based on command line parser
-    match nsKey:
+    match namespace_key:
         case "vcs":
-            handleVCS(ns=ns, db=db)
+            handle_vcs(ns=ns, db=db)
+        case "size":
+            handle_size(ns=ns, db=db)
         case _:
             sys.exit(3)
 
