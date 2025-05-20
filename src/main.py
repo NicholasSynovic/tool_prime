@@ -1,5 +1,11 @@
+"""
+Main entrypoint into the PRiMe application.
+
+Copyright (C) 2025 Nicholas M. Synovic.
+
+"""
+
 import sys
-from os.path import abspath
 from pathlib import Path
 from typing import Any
 
@@ -15,11 +21,25 @@ from src.api.types import (
 )
 from src.api.vcs import VersionControlSystem, identifyVCS, parseVCS
 from src.cli import CLI
-from src.api.size import compute_size_of_repo
 
 
-def getNameSpaceKey(ns: dict[str, Any]) -> str:
-    return set([key.split(".")[0] for key in ns.keys()]).pop()
+def get_first_namespace_key(namespace: dict[str, Any]) -> str:
+    """
+    Return a top-level key prefix from a namespaced dictionary.
+
+    This function assumes that keys in the dictionary follow a dot-separated namespace
+    format (e.g., "user.name", "config.value"). It splits each key at the first
+    dot and collects the first segment, then returns one arbitrary unique prefix
+    from the resulting set.
+
+    Args:
+        namespace (dict[str, Any]): A dictionary with dot-separated string keys.
+
+    Returns:
+        str: A single unique top-level key prefix extracted from the keys.
+
+    """
+    return {key.split(".")[0] for key in namespace}.pop()
 
 
 def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
@@ -127,7 +147,7 @@ def main() -> None:
     cli: CLI = CLI()
     ns: dict[str, Any] = cli.parse_args().__dict__
     try:
-        namespace_key: str = getNameSpaceKey(ns=ns)
+        namespace_key: str = get_first_namespace_key(namespace=ns)
     except KeyError:
         sys.exit(1)
 
