@@ -1,3 +1,10 @@
+"""
+Handle command line argument parsing.
+
+Copyright 2025 (C) Nicholas M. Synovic
+
+"""
+
 import sys
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 from pathlib import Path
@@ -8,10 +15,13 @@ import src
 class CLI:
     """
     A helper class to manage argument parsing using the argparse module.
+
     Provides a more structured way to define and handle command-line arguments.
+
     """
 
     def __init__(self) -> None:
+        """Initialize the argument parser."""
         self.parser: ArgumentParser = ArgumentParser(
             prog=src.PROG,
             description=src.DESCRIPTION,
@@ -21,7 +31,7 @@ class CLI:
             "-v",
             "--version",
             action="version",
-            version=open(file=Path(sys._MEIPASS, "_version")).read().strip(),
+            version=Path(sys._MEIPASS, "_version").read_text(encoding="UTF-8").strip(),
         )
 
         self.subparsers: _SubParsersAction[ArgumentParser] = (
@@ -36,17 +46,24 @@ class CLI:
 
     def vcs_subparser(self) -> ArgumentParser:
         """
-        Defines the VCS subparser with its arguments.
-        """
+        Define a subparser for parsing a project's version control system.
 
-        vcsParser: ArgumentParser = self.subparsers.add_parser(
+        This function creates a subparser to handle command-line arguments
+        related to version control system (VCS) analysis. It defines the
+        arguments needed to extract metadata from a project's VCS repository.
+
+        Returns:
+           An ArgumentParser object representing the VCS subparser.
+
+        """
+        vcs_parser: ArgumentParser = self.subparsers.add_parser(
             name="vcs",
-            help="Parse a project's version control system for project metadata",  # noqa: E501
+            help="Parse a project's version control system for project metadata",
             prog=f"{src.PROG} vcs",
             epilog=src.EPILOG,
         )
 
-        vcsParser.add_argument(
+        vcs_parser.add_argument(
             "-i",
             "--input",
             nargs=1,
@@ -55,7 +72,7 @@ class CLI:
             type=Path,
             dest="vcs.input",
         )
-        vcsParser.add_argument(
+        vcs_parser.add_argument(
             "-o",
             "--output",
             nargs=1,
@@ -65,21 +82,28 @@ class CLI:
             dest="vcs.output",
         )
 
-        return vcsParser
+        return vcs_parser
 
     def size_subparser(self) -> ArgumentParser:
         """
-        Defines the size subparser with its arguments.
-        """
+        Create a subparser for measuring repository size.
 
-        sizeParser: ArgumentParser = self.subparsers.add_parser(
+        This function creates a subparser for handling size-related
+        command-line arguments.  It defines the arguments required to
+        calculate and store the repository size.
+
+        Returns:
+           An ArgumentParser object representing the size subparser.
+
+        """
+        size_parser: ArgumentParser = self.subparsers.add_parser(
             name="size",
             help="Measure the size of repository by lines of code",
             prog=f"{src.PROG} size",
             epilog=src.EPILOG,
         )
 
-        sizeParser.add_argument(
+        size_parser.add_argument(
             "-i",
             "--input",
             nargs=1,
@@ -88,7 +112,7 @@ class CLI:
             type=Path,
             dest="size.input",
         )
-        sizeParser.add_argument(
+        size_parser.add_argument(
             "-o",
             "--output",
             nargs=1,
@@ -98,17 +122,17 @@ class CLI:
             dest="size.output",
         )
 
-        return sizeParser
+        return size_parser
 
     def parse_args(self) -> Namespace:
         """
-        Parses the command-line arguments.
+        Parse command-line arguments.
+
+        This function parses the command-line arguments using the
+        command-line argument parser.
+
+        Returns:
+           A Namespace object containing the parsed command-line arguments.
+
         """
-        self.args = self.parser.parse_args()
-        return self.args
-
-
-if __name__ == "__main__":
-    cli: CLI = CLI()
-
-    print(cli.parse_args())
+        return self.parser.parse_args()
