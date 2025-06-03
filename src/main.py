@@ -84,7 +84,7 @@ def handle_vcs(ns: dict[str, Any], db: DB) -> None:
     )
 
     repository_path: Path = Path(ns["vcs.input"][0]).resolve()
-    vcs: VersionControlSystem | int = identifyVCS(repoPath=repository_path)
+    vcs: VersionControlSystem | int = identifyVCS(repo_path=repository_path)
     if vcs == -1:
         sys.exit(2)
 
@@ -119,7 +119,7 @@ def handle_size(ns: dict[str, Any], db: DB) -> None:
     data: list[DataFrame] = []
 
     repo_path: Path = Path(ns["size.input"][0]).resolve()
-    vcs: VersionControlSystem = identifyVCS(repoPath=repo_path)
+    vcs: VersionControlSystem = identifyVCS(repo_path=repo_path)
     if vcs == -1:
         sys.exit(2)
 
