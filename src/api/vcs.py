@@ -186,6 +186,20 @@ class Git(VersionControlSystem):
 
 
 def identify_vcs(repo_path: Path) -> VersionControlSystem | int:
+    """
+    Identify and return the version control system used at a given repository path.
+
+    Attempts to initialize a Git repository at the specified path. If the path
+    is not a valid Git repository, returns -1 to indicate failure.
+
+    Args:
+        repo_path (Path): The filesystem path to the repository.
+
+    Returns:
+        VersionControlSystem | int: An instance of a `VersionControlSystem` (e.g.,
+        `Git`) if successful; otherwise, -1 if the repository is invalid or unsupported.
+
+    """
     try:
         return Git(repo_path=repo_path)
     except InvalidGitRepositoryError:
