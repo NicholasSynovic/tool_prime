@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import pandas
+import pandas as pd
 from pandas import DataFrame
 from pydantic import BaseModel
 from sqlalchemy import (
@@ -121,7 +121,7 @@ class DB:
         return True
 
     def read_table(self, table: str, model: BaseModel) -> DataFrame:
-        df: DataFrame = pandas.read_sql_table(
+        df: DataFrame = pd.read_sql_table(
             table_name=table,
             con=self.engine,
             index_col="id",

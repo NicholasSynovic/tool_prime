@@ -1,5 +1,5 @@
 from pandas import DataFrame
-import pandas
+import pandas as pd
 import subprocess  # nosec
 from subprocess import CompletedProcess  # nosec
 from pathlib import Path
@@ -22,4 +22,4 @@ class SCC:
             text=True,
         )
 
-        return pandas.read_csv(filepath_or_buffer=StringIO(result.stdout))
+        return pd.read_csv(filepath_or_buffer=StringIO(result.stdout))
