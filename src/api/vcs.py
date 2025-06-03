@@ -192,7 +192,7 @@ def identifyVCS(repoPath: Path) -> VersionControlSystem | int:
         return -1
 
 
-def parseVCS(
+def parse_vcs(
     vcs: VersionControlSystem,
     previous_revisions: DataFrame | None,
 ) -> dict[str, DataFrame]:

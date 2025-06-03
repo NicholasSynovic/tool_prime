@@ -17,7 +17,7 @@ from pandas import DataFrame
 
 from src.api.db import DB
 from src.api.types import Authors, CommitHashes, CommitLog, Committers, Releases, Size
-from src.api.vcs import VersionControlSystem, identifyVCS, parseVCS
+from src.api.vcs import VersionControlSystem, identifyVCS, parse_vcs
 from src.cli import CLI
 
 
@@ -88,7 +88,7 @@ def handle_vcs(ns: dict[str, Any], db: DB) -> None:
     if vcs == -1:
         sys.exit(2)
 
-    data: dict[str, DataFrame] = parseVCS(
+    data: dict[str, DataFrame] = parse_vcs(
         vcs=vcs,
         previousRevisions=existing_commits_df,
     )
