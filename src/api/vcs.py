@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator, List
+from typing import Any, Iterator
 
 from git import Commit, Repo, TagReference
 from git.exc import InvalidGitRepositoryError
@@ -12,7 +12,7 @@ from src.api.utils import (
     copyDFColumnsAndRemoveDuplicateRowsByColumn,
     copyDFColumnsToDF,
     replaceDFValueInColumnWithIndexReference,
-    replaceDFValueInColumnWithListOfIndexReferences,
+    replaceDFValueInColumnWithlistOfIndexReferences,
 )
 
 
@@ -53,7 +53,7 @@ class VersionControlSystem(ABC):
     @abstractmethod
     def parse_revisions(self, revisions: Any) -> DataFrame:
         """
-        Abstract method to parse a List[Revisions] and extract relevant data
+        Abstract method to parse a list[Revisions] and extract relevant data
         Subclasses must implement this method.
         """
         pass
@@ -77,8 +77,8 @@ class Revision:
         author: str,
         authorEmail: str,
         authoredDatetime: datetime,
-        coAuthors: List[str],
-        coAuthorEmails: List[str],
+        coAuthors: list[str],
+        coAuthorEmails: list[str],
         commitHash: str,
         committedDatetime: datetime,
         committer: str,
@@ -86,7 +86,7 @@ class Revision:
         encoding: str,
         message: str,
         gpgsign: str,
-        parents: List[str],
+        parents: list[str],
     ):
         self.data: dict[str, Any] = {
             "author": author,
@@ -126,7 +126,7 @@ class Git(VersionControlSystem):
         self,
         revisions: tuple[Iterator[Commit], int],
     ) -> DataFrame:
-        data: List[dict] = []
+        data: list[dict] = []
 
         with Bar(
             self.parseRevisionsBarMessage,
@@ -162,9 +162,9 @@ class Git(VersionControlSystem):
         return DataFrame(data=data)
 
     def get_release_revisions(self) -> DataFrame:
-        data: dict[str, List[str]] = {"commit_hash_id": []}
+        data: dict[str, list[str]] = {"commit_hash_id": []}
 
-        tags: List[TagReference] = self.repo.tags
+        tags: list[TagReference] = self.repo.tags
 
         tagRef: TagReference
         for tagRef in tags:
@@ -315,13 +315,13 @@ def parse_vcs(
 
     # Replace commit log information with a list of indicies from static
     # DataFrames
-    commit_log_df = replaceDFValueInColumnWithListOfIndexReferences(
+    commit_log_df = replaceDFValueInColumnWithlistOfIndexReferences(
         df_1=commit_log_df,
         df_2=data["authors"],
         df_1_col="co_author_emails",
         df_2_col="author_email",
     )
-    commit_log_df = replaceDFValueInColumnWithListOfIndexReferences(
+    commit_log_df = replaceDFValueInColumnWithlistOfIndexReferences(
         df_1=commit_log_df,
         df_2=data["commit_hashes"],
         df_1_col="parents",

@@ -1,11 +1,11 @@
 from json import dumps
-from typing import Any, List
+from typing import Any
 
 from pandas import DataFrame, Series
 from progress.bar import Bar
 
 
-def copyDFColumnsToDF(df: DataFrame, columns: List[str]) -> DataFrame:
+def copyDFColumnsToDF(df: DataFrame, columns: list[str]) -> DataFrame:
     return df[columns].copy()
 
 
@@ -26,7 +26,7 @@ def removeDuplicateDFRows(df: DataFrame, column: str) -> DataFrame:
 
 
 def copyDFColumnsAndRemoveDuplicateRowsByColumn(
-    df: DataFrame, columns: List[str], checkColumn: str
+    df: DataFrame, columns: list[str], checkColumn: str
 ) -> DataFrame:
     dfCopy: DataFrame = copyDFColumnsToDF(df=df, columns=columns)
     removeDuplicateDFRows(df=dfCopy, column=checkColumn)
@@ -53,7 +53,7 @@ def replaceDFValueInColumnWithIndexReference(
     return df_1
 
 
-def replaceDFValueInColumnWithListOfIndexReferences(
+def replaceDFValueInColumnWithlistOfIndexReferences(
     df_1: DataFrame,
     df_2: DataFrame,
     df_1_col: str,
