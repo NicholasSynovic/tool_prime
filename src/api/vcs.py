@@ -185,7 +185,7 @@ class Git(VersionControlSystem):
         self.checkout_revision(revision_hash=self.repo.head.commit.hexsha)
 
 
-def identifyVCS(repo_path: Path) -> VersionControlSystem | int:
+def identify_vcs(repo_path: Path) -> VersionControlSystem | int:
     try:
         return Git(repo_path=repo_path)
     except InvalidGitRepositoryError:

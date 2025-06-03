@@ -17,7 +17,7 @@ from pandas import DataFrame
 
 from src.api.db import DB
 from src.api.types import Authors, CommitHashes, CommitLog, Committers, Releases, Size
-from src.api.vcs import VersionControlSystem, identifyVCS, parse_vcs
+from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
 from src.cli import CLI
 
 
@@ -84,7 +84,7 @@ def handle_vcs(ns: dict[str, Any], db: DB) -> None:
     )
 
     repository_path: Path = Path(ns["vcs.input"][0]).resolve()
-    vcs: VersionControlSystem | int = identifyVCS(repo_path=repository_path)
+    vcs: VersionControlSystem | int = identify_vcs(repo_path=repository_path)
     if vcs == -1:
         sys.exit(2)
 
@@ -119,7 +119,7 @@ def handle_size(ns: dict[str, Any], db: DB) -> None:
     data: list[DataFrame] = []
 
     repo_path: Path = Path(ns["size.input"][0]).resolve()
-    vcs: VersionControlSystem = identifyVCS(repo_path=repo_path)
+    vcs: VersionControlSystem = identify_vcs(repo_path=repo_path)
     if vcs == -1:
         sys.exit(2)
 
