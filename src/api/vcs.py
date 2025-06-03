@@ -194,7 +194,7 @@ def identifyVCS(repoPath: Path) -> VersionControlSystem | int:
 
 def parseVCS(
     vcs: VersionControlSystem,
-    previousRevisions: DataFrame | None,
+    previous_revisions: DataFrame | None,
 ) -> dict[str, DataFrame]:
     data: dict[str, DataFrame] = {}
 
@@ -204,12 +204,12 @@ def parseVCS(
     commit_log_df: DataFrame = vcs.parse_revisions(revisions=revisions)
 
     # Remove previously stored revisions from DataFrames
-    if isinstance(previousRevisions, DataFrame):
+    if isinstance(previous_revisions, DataFrame):
         commit_log_df = commit_log_df[
-            ~commit_log_df["commit_hash"].isin(previousRevisions["commit_hash"])
+            ~commit_log_df["commit_hash"].isin(previous_revisions["commit_hash"])
         ]
         releases_df = releases_df[
-            ~releases_df["commit_hash_id"].isin(previousRevisions["commit_hash"])
+            ~releases_df["commit_hash_id"].isin(previous_revisions["commit_hash"])
         ]
 
     # Copy static information to output data structure
