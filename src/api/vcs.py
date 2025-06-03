@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator, List, Tuple
+from typing import Any, Iterator, List
 
 from git import Commit, Repo, TagReference
 from git.exc import InvalidGitRepositoryError
@@ -42,7 +42,7 @@ class VersionControlSystem(ABC):
         pass
 
     @abstractmethod
-    def get_revisions(self) -> Tuple[Any, int]:
+    def get_revisions(self) -> tuple[Any, int]:
         """
         Abstract method to retrieve revisions and the number of revisions.
         Revisions are retrieved from the oldest revision to the newest.
@@ -112,7 +112,7 @@ class Git(VersionControlSystem):
     def _initialize_repo(self) -> Repo:
         return Repo(path=self.repo_path)
 
-    def get_revisions(self) -> Tuple[Iterator[Commit], int]:
+    def get_revisions(self) -> tuple[Iterator[Commit], int]:
         revisionCount: int = sum(1 for _ in self.repo.iter_commits())
         return (
             self.repo.iter_commits(
@@ -124,7 +124,7 @@ class Git(VersionControlSystem):
 
     def parse_revisions(
         self,
-        revisions: Tuple[Iterator[Commit], int],
+        revisions: tuple[Iterator[Commit], int],
     ) -> DataFrame:
         data: List[dict] = []
 
@@ -199,7 +199,7 @@ def parseVCS(
     data: dict[str, DataFrame] = {}
 
     # Extract the commit log and release revisions
-    revisions: Tuple[Any, int] = vcs.get_revisions()
+    revisions: tuple[Any, int] = vcs.get_revisions()
     releases_df: DataFrame = vcs.get_release_revisions()
     commit_log_df: DataFrame = vcs.parse_revisions(revisions=revisions)
 
