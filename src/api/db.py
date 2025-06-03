@@ -84,6 +84,24 @@ class DB:
             ForeignKeyConstraint(["committer_id"], ["committers.id"]),
         )
 
+        _: Table = Table(
+            "size",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("commit_hash_id", Integer),
+            Column("language", String),
+            Column("filename", String),
+            Column("lines", Integer),
+            Column("code", Integer),
+            Column("comments", Integer),
+            Column("blanks", Integer),
+            Column("bytes", Integer),
+            ForeignKeyConstraint(
+                ["commit_hash_id"],
+                ["commit_hashes.id"],
+            ),
+        )
+
         self.metadata.create_all(bind=self.engine, checkfirst=True)
 
     def write_df(self, df: DataFrame, table: str, model: BaseModel) -> bool:

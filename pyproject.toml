@@ -19,7 +19,9 @@ pandas = "^2.2.3"
 progress = "^1.6"
 pydantic = "^2.11.4"
 
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+prime = 'src.main:main'

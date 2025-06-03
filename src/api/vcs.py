@@ -196,7 +196,7 @@ def parseVCS(
     vcs: VersionControlSystem,
     previousRevisions: DataFrame | None,
 ) -> dict[str, DataFrame]:
-    data: dict[str:DataFrame] = {}
+    data: dict[str, DataFrame] = {}
 
     # Extract the commit log and release revisions
     revisions: Tuple[Any, int] = vcs.get_revisions()
@@ -230,46 +230,46 @@ def parseVCS(
 
     # Replace commit log information with the index to static DataFrames
     releasesDF = replaceDFValueInColumnWithIndexReference(
-        df1=releasesDF,
-        df2=data["commit_hashes"],
-        df1Col="commit_hash_id",
-        df2Col="commit_hash",
+        df_1=releasesDF,
+        df_2=data["commit_hashes"],
+        df_1_col="commit_hash_id",
+        df_2_col="commit_hash",
     )
     releasesDF = releasesDF.dropna(how="any", ignore_index=True)
     releasesDF["commit_hash_id"] = releasesDF["commit_hash_id"].apply(int)
 
     commitLogDF = replaceDFValueInColumnWithIndexReference(
-        df1=commitLogDF,
-        df2=data["commit_hashes"],
-        df1Col="commit_hash",
-        df2Col="commit_hash",
+        df_1=commitLogDF,
+        df_2=data["commit_hashes"],
+        df_1_col="commit_hash",
+        df_2_col="commit_hash",
     )
     commitLogDF = replaceDFValueInColumnWithIndexReference(
-        df1=commitLogDF,
-        df2=data["authors"],
-        df1Col="author_email",
-        df2Col="author_email",
+        df_1=commitLogDF,
+        df_2=data["authors"],
+        df_1_col="author_email",
+        df_2_col="author_email",
     )
     commitLogDF = replaceDFValueInColumnWithIndexReference(
-        df1=commitLogDF,
-        df2=data["committers"],
-        df1Col="committer_email",
-        df2Col="committer_email",
+        df_1=commitLogDF,
+        df_2=data["committers"],
+        df_1_col="committer_email",
+        df_2_col="committer_email",
     )
 
     # Replace commit log information with a list of indicies from static
     # DataFrames
     commitLogDF = replaceDFValueInColumnWithListOfIndexReferences(
-        df1=commitLogDF,
-        df2=data["authors"],
-        df1Col="co_author_emails",
-        df2Col="author_email",
+        df_1=commitLogDF,
+        df_2=data["authors"],
+        df_1_col="co_author_emails",
+        df_2_col="author_email",
     )
     commitLogDF = replaceDFValueInColumnWithListOfIndexReferences(
-        df1=commitLogDF,
-        df2=data["commit_hashes"],
-        df1Col="parents",
-        df2Col="commit_hash",
+        df_1=commitLogDF,
+        df_2=data["commit_hashes"],
+        df_1_col="parents",
+        df_2_col="commit_hash",
     )
 
     # Drop irrelevant columns and rename existing columns to match database

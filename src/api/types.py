@@ -68,3 +68,16 @@ class CommitLog(BaseModel):
     encoding: str = Field(default=..., description="Message encoding")
     message: str = Field(default=..., description="Commit message")
     gpgsign: str = Field(default=..., description="GPG signature")
+
+
+class Size(BaseModel):
+    language: str = Field(default=..., description="Identified programming language")
+    filename: str = Field(
+        default=..., description="Name of the file; not the full path"
+    )
+    lines: int = Field(default=..., description="Number of lines in the file")
+    code: int = Field(default=..., description="Number of lines of code")
+    comments: int = Field(default=..., description="Number of lines of comments")
+    blanks: int = Field(default=..., description="Number of blank lines")
+    bytes: int = Field(default=..., description="Number of bytes")
+    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")

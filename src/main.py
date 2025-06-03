@@ -8,17 +8,15 @@ Copyright (C) 2025 Nicholas M. Synovic.
 import sys
 from pathlib import Path
 from typing import Any
+from progress.bar import Bar
+from src.api.size import SCC
+from pandas import Series
+import pandas as pd
 
 from pandas import DataFrame
 
 from src.api.db import DB
-from src.api.types import (
-    Authors,
-    CommitHashes,
-    CommitLog,
-    Committers,
-    Releases,
-)
+from src.api.types import Authors, CommitHashes, CommitLog, Committers, Releases, Size
 from src.api.vcs import VersionControlSystem, identifyVCS, parseVCS
 from src.cli import CLI
 
@@ -106,7 +104,7 @@ def handle_vcs(ns: dict[str, Any], db: DB) -> None:
     db.write_df(df=data["releases"], table="releases", model=Releases)
 
 
-def handle_size(ns: dict[str, Any]) -> None:
+def handle_size(ns: dict[str, Any], db: DB) -> None:
     """
     Compute and store repository size measured in lines of code into a database.
 
@@ -118,19 +116,44 @@ def handle_size(ns: dict[str, Any]) -> None:
       db: A DB object representing the database connection.
 
     """
-    # commitsDF: DataFrame = db.read_table(
-    #     table="commit_hashes",
-    #     model=CommitHashes,
-    # )
+    data: list[DataFrame] = []
 
     repo_path: Path = Path(ns["size.input"][0]).resolve()
-    vcs: VersionControlSystem | int = identifyVCS(repoPath=repo_path)
+    vcs: VersionControlSystem = identifyVCS(repoPath=repo_path)
     if vcs == -1:
         sys.exit(2)
 
-    # df: DataFrame = compute_size_of_repo(commitsDF=commitsDF, vcs=vcs)
+    scc: SCC = SCC(directory=vcs.repo_path)
 
-    # df.shape
+    commits_df: DataFrame = db.read_table(
+        table="commit_hashes",
+        model=CommitHashes,
+    )
+
+    idx: int
+    row: Series
+    with Bar("Computing size per commit...", max=commits_df.shape[0]) as bar:
+        for idx, row in commits_df.iterrows():
+            commit_hash: str = row["commit_hash"]
+
+            vcs.checkout_revision(revision_hash=commit_hash)
+
+            scc_data: DataFrame = scc.run()
+            scc_data["commit_hash_id"] = idx
+
+            data.append(
+                scc_data.drop(
+                    columns=["Provider", "Complexity", "ULOC"],
+                )
+            )
+            bar.next()
+
+    vcs.checkout_most_recent_revision()
+
+    size_data: DataFrame = pd.concat(objs=data, ignore_index=True)
+    size_data.columns = size_data.columns.str.lower()
+
+    db.write_df(df=size_data, table="size", model=Size)
 
 
 def main() -> None:

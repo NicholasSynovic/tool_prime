@@ -32,57 +32,58 @@ def copyDFColumnsAndRemoveDuplicateRowsByColumn(
 
 
 def replaceDFValueInColumnWithIndexReference(
-    df1: DataFrame,
-    df2: DataFrame,
-    df1Col: str,
-    df2Col: str,
+    df_1: DataFrame,
+    df_2: DataFrame,
+    df_1_col: str,
+    df_2_col: str,
 ) -> DataFrame:
     """
-    Replaces the values in DataFrame `df1` in column `df1Col` by the index of the values in DataFrame `df2` in column `df2Col`. # noqa: E501
+    Replaces the values in DataFrame `df_1` in column `df_1_col` by the index of
+    the values in DataFrame `df_2` in column `df_2_col`.
 
-    Returns DataFrame `df1`
+    Returns DataFrame `df_1`
     """
-    value_to_index = df2.reset_index().set_index(df2Col)["index"].to_dict()
+    value_to_index = df_2.reset_index().set_index(df_2_col)["index"].to_dict()
 
-    df1 = df1.copy()
-    df1[df1Col] = df1[df1Col].map(value_to_index)
-    return df1
+    df_1 = df_1.copy()
+    df_1[df_1_col] = df_1[df_1_col].map(value_to_index)
+    return df_1
 
 
 def replaceDFValueInColumnWithListOfIndexReferences(
-    df1: DataFrame,
-    df2: DataFrame,
-    df1Col: str,
-    df2Col: str,
+    df_1: DataFrame,
+    df_2: DataFrame,
+    df_1_col: str,
+    df_2_col: str,
 ) -> DataFrame:
     """
-    Replace the values stored in a List in DataFrame `df1` in column `df1Col` by the index of the values in DataFrame `df2` in column `df2Col`. # noqa: E501
+    Replace the values stored in a list in DataFrame `df_1` in column `df_1_col`
+    by the index of the values in DataFrame `df_2` in column `df_2_col`.
 
-    Returns DataFrame `df1`
+    Returns DataFrame `df_1`
+
     """
-    value_to_index = df2.reset_index().set_index(df2Col)["index"].to_dict()
-    df1 = df1.copy()
+    value_to_index = df_2.reset_index().set_index(df_2_col)["index"].to_dict()
+    df_1 = df_1.copy()
 
-    with Bar(f"Updating values in ''{df1Col}''...", max=df1.shape[0]) as bar:
-        idx: int
-        row: Series
-        for idx, row in df1.iterrows():
-            value_list: List[Any] = row[df1Col]
-            new_list: List[dict[str, any]] = []
+    idx: int
+    row: Series
+    with Bar(f"Updating values in ''{df_1_col}''...", max=df_1.shape[0]) as bar:
+        for idx, row in df_1.iterrows():
+            value_list: list[Any] = row[df_1_col]
+            new_list: list[dict[str, Any]] = []
 
             for value in value_list:
                 replacement_index = value_to_index.get(value)
-                new_list.append({df2Col: replacement_index})
+                new_list.append({df_2_col: replacement_index})
 
-            df1.at[idx, df1Col] = new_list
+            df_1.at[idx, df_1_col] = new_list
             bar.next()
 
-    df1[df1Col] = df1[df1Col].apply(
-        lambda x: (
-            [{df2Col: None}] if isinstance(x, list) and len(x) == 0 else x
-        )  # noqa: E501
+    df_1[df_1_col] = df_1[df_1_col].apply(
+        lambda x: ([{df_2_col: None}] if isinstance(x, list) and len(x) == 0 else x)
     )
 
-    df1[df1Col] = df1[df1Col].apply(lambda x: dumps(obj=x))
+    df_1[df_1_col] = df_1[df_1_col].apply(lambda x: dumps(obj=x))
 
-    return df1
+    return df_1
