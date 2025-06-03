@@ -12,6 +12,25 @@ from pathlib import Path
 import src
 
 
+def get_version() -> str:
+    """
+    Retrieve the application version from a bundled file.
+
+    Attempts to read the version string from a file named "_version"
+    located in the temporary directory used by PyInstaller (`sys._MEIPASS`).
+    If the application is not running in a PyInstaller bundle, returns
+    a fallback string.
+
+    Returns:
+        str: The version string if found, otherwise "i don't know".
+
+    """
+    try:
+        return Path(sys._MEIPASS, "_version").read_text(encoding="UTF-8").strip()
+    except AttributeError:
+        return "i don't know"
+
+
 class CLI:
     """
     A helper class to manage argument parsing using the argparse module.
@@ -31,7 +50,7 @@ class CLI:
             "-v",
             "--version",
             action="version",
-            version=Path(sys._MEIPASS, "_version").read_text(encoding="UTF-8").strip(),
+            version=get_version(),
         )
 
         self.subparsers: _SubParsersAction[ArgumentParser] = (
