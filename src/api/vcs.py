@@ -141,7 +141,7 @@ class Git(VersionControlSystem):
                         authoredDatetime=commit.authored_datetime.astimezone(
                             tz=timezone.utc
                         ),
-                        coAuthors=[co_author.name for co_author in commit.co_authors],  # noqa: E501
+                        coAuthors=[co_author.name for co_author in commit.co_authors],
                         coAuthorEmails=[
                             co_author.email for co_author in commit.co_authors
                         ],
@@ -200,16 +200,16 @@ def parseVCS(
 
     # Extract the commit log and release revisions
     revisions: Tuple[Any, int] = vcs.get_revisions()
-    releasesDF: DataFrame = vcs.get_release_revisions()
+    releases_df: DataFrame = vcs.get_release_revisions()
     commit_log_df: DataFrame = vcs.parse_revisions(revisions=revisions)
 
     # Remove previously stored revisions from DataFrames
     if isinstance(previousRevisions, DataFrame):
         commit_log_df = commit_log_df[
-            ~commit_log_df["commit_hash"].isin(previousRevisions["commit_hash"])  # noqa: E712
+            ~commit_log_df["commit_hash"].isin(previousRevisions["commit_hash"])
         ]
-        releasesDF = releasesDF[
-            ~releasesDF["commit_hash_id"].isin(previousRevisions["commit_hash"])  # noqa: E712
+        releases_df = releases_df[
+            ~releases_df["commit_hash_id"].isin(previousRevisions["commit_hash"])
         ]
 
     # Copy static information to output data structure
@@ -229,14 +229,14 @@ def parseVCS(
     )
 
     # Replace commit log information with the index to static DataFrames
-    releasesDF = replaceDFValueInColumnWithIndexReference(
-        df_1=releasesDF,
+    releases_df = replaceDFValueInColumnWithIndexReference(
+        df_1=releases_df,
         df_2=data["commit_hashes"],
         df_1_col="commit_hash_id",
         df_2_col="commit_hash",
     )
-    releasesDF = releasesDF.dropna(how="any", ignore_index=True)
-    releasesDF["commit_hash_id"] = releasesDF["commit_hash_id"].apply(int)
+    releases_df = releases_df.dropna(how="any", ignore_index=True)
+    releases_df["commit_hash_id"] = releases_df["commit_hash_id"].apply(int)
 
     commit_log_df = replaceDFValueInColumnWithIndexReference(
         df_1=commit_log_df,
@@ -274,7 +274,9 @@ def parseVCS(
 
     # Drop irrelevant columns and rename existing columns to match database
     # schema
-    commit_log_df = commit_log_df.drop(columns=["author", "committer", "co_authors"],)
+    commit_log_df = commit_log_df.drop(
+        columns=["author", "committer", "co_authors"],
+    )
     commit_log_df = commit_log_df.rename(
         columns={
             "author_email": "author_id",
@@ -285,7 +287,7 @@ def parseVCS(
         },
     )
 
-    data["releases"] = releasesDF
+    data["releases"] = releases_df
     data["commit_logs"] = commit_log_df
 
     return data
