@@ -178,10 +178,27 @@ class Git(VersionControlSystem):
         return DataFrame(data=data)
 
     def checkout_revision(self, revision_hash: str) -> None:
+        """
+        Check out a specific commit in the repository by its hash.
+
+        This method resolves the given commit hash and performs a Git checkout
+        to switch the working directory to that commit.
+
+        Args:
+            revision_hash (str): The SHA-1 hash of the commit to check out.
+
+        """
         commit: Commit = self.repo.commit(rev=revision_hash)
         self.repo.git.checkout(commit)
 
-    def checkout_most_recent_revision(self):
+    def checkout_most_recent_revision(self) -> None:
+        """
+        Check out the most recent (HEAD) commit in the repository.
+
+        Retrieves the latest commit hash from the current branch and checks it out
+        using the `checkout_revision` method.
+
+        """
         self.checkout_revision(revision_hash=self.repo.head.commit.hexsha)
 
 
