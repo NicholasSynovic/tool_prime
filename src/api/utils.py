@@ -9,16 +9,18 @@ def copyDFColumnsToDF(df: DataFrame, columns: List[str]) -> DataFrame:
     return df[columns].copy()
 
 
-def removeDuplicateDFRows(df: DataFrame, column: str) -> None:
+def removeDuplicateDFRows(df: DataFrame, column: str) -> DataFrame:
     """
     Keeps the first instance in a column.
-    Edits `df` inplace.
+
     Replaces the index after dropping duplicate rows.
+
+    Returns DataFrame `df`
+
     """
-    df.drop_duplicates(
+    return df.drop_duplicates(
         subset=column,
         keep="first",
-        inplace=True,
         ignore_index=True,
     )
 
@@ -42,6 +44,7 @@ def replaceDFValueInColumnWithIndexReference(
     the values in DataFrame `df_2` in column `df_2_col`.
 
     Returns DataFrame `df_1`
+
     """
     value_to_index = df_2.reset_index().set_index(df_2_col)["index"].to_dict()
 

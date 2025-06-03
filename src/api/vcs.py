@@ -201,12 +201,12 @@ def parseVCS(
     # Extract the commit log and release revisions
     revisions: Tuple[Any, int] = vcs.get_revisions()
     releasesDF: DataFrame = vcs.get_release_revisions()
-    commitLogDF: DataFrame = vcs.parse_revisions(revisions=revisions)
+    commit_log_df: DataFrame = vcs.parse_revisions(revisions=revisions)
 
     # Remove previously stored revisions from DataFrames
     if isinstance(previousRevisions, DataFrame):
-        commitLogDF = commitLogDF[
-            ~commitLogDF["commit_hash"].isin(previousRevisions["commit_hash"])  # noqa: E712
+        commit_log_df = commit_log_df[
+            ~commit_log_df["commit_hash"].isin(previousRevisions["commit_hash"])  # noqa: E712
         ]
         releasesDF = releasesDF[
             ~releasesDF["commit_hash_id"].isin(previousRevisions["commit_hash"])  # noqa: E712
@@ -214,16 +214,16 @@ def parseVCS(
 
     # Copy static information to output data structure
     data["commit_hashes"] = copyDFColumnsToDF(
-        df=commitLogDF,
+        df=commit_log_df,
         columns=["commit_hash"],
     )
     data["authors"] = copyDFColumnsAndRemoveDuplicateRowsByColumn(
-        df=commitLogDF,
+        df=commit_log_df,
         columns=["author", "author_email"],
         checkColumn="author_email",
     )
     data["committers"] = copyDFColumnsAndRemoveDuplicateRowsByColumn(
-        df=commitLogDF,
+        df=commit_log_df,
         columns=["committer", "committer_email"],
         checkColumn="committer_email",
     )
@@ -238,20 +238,20 @@ def parseVCS(
     releasesDF = releasesDF.dropna(how="any", ignore_index=True)
     releasesDF["commit_hash_id"] = releasesDF["commit_hash_id"].apply(int)
 
-    commitLogDF = replaceDFValueInColumnWithIndexReference(
-        df_1=commitLogDF,
+    commit_log_df = replaceDFValueInColumnWithIndexReference(
+        df_1=commit_log_df,
         df_2=data["commit_hashes"],
         df_1_col="commit_hash",
         df_2_col="commit_hash",
     )
-    commitLogDF = replaceDFValueInColumnWithIndexReference(
-        df_1=commitLogDF,
+    commit_log_df = replaceDFValueInColumnWithIndexReference(
+        df_1=commit_log_df,
         df_2=data["authors"],
         df_1_col="author_email",
         df_2_col="author_email",
     )
-    commitLogDF = replaceDFValueInColumnWithIndexReference(
-        df_1=commitLogDF,
+    commit_log_df = replaceDFValueInColumnWithIndexReference(
+        df_1=commit_log_df,
         df_2=data["committers"],
         df_1_col="committer_email",
         df_2_col="committer_email",
@@ -259,14 +259,14 @@ def parseVCS(
 
     # Replace commit log information with a list of indicies from static
     # DataFrames
-    commitLogDF = replaceDFValueInColumnWithListOfIndexReferences(
-        df_1=commitLogDF,
+    commit_log_df = replaceDFValueInColumnWithListOfIndexReferences(
+        df_1=commit_log_df,
         df_2=data["authors"],
         df_1_col="co_author_emails",
         df_2_col="author_email",
     )
-    commitLogDF = replaceDFValueInColumnWithListOfIndexReferences(
-        df_1=commitLogDF,
+    commit_log_df = replaceDFValueInColumnWithListOfIndexReferences(
+        df_1=commit_log_df,
         df_2=data["commit_hashes"],
         df_1_col="parents",
         df_2_col="commit_hash",
@@ -274,11 +274,8 @@ def parseVCS(
 
     # Drop irrelevant columns and rename existing columns to match database
     # schema
-    commitLogDF.drop(
-        columns=["author", "committer", "co_authors"],
-        inplace=True,
-    )
-    commitLogDF.rename(
+    commit_log_df = commit_log_df.drop(columns=["author", "committer", "co_authors"],)
+    commit_log_df = commit_log_df.rename(
         columns={
             "author_email": "author_id",
             "co_author_emails": "co_author_ids",
@@ -286,10 +283,9 @@ def parseVCS(
             "committer_email": "committer_id",
             "parents": "parent_hash_ids",
         },
-        inplace=True,
     )
 
     data["releases"] = releasesDF
-    data["commit_logs"] = commitLogDF
+    data["commit_logs"] = commit_log_df
 
     return data
