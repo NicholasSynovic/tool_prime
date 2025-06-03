@@ -196,6 +196,31 @@ def parse_vcs(
     vcs: VersionControlSystem,
     previous_revisions: DataFrame | None,
 ) -> dict[str, DataFrame]:
+    """
+    Parse and structure version control system data into normalized DataFrames.
+
+    This function processes revision and release data from a version control
+    system (VCS), filters out revisions that have already been processed, and
+    normalizes the data by extracting static information (authors, committers,
+    commit hashes) into separate DataFrames. It also replaces values in the
+    commit and release logs with references to these static tables to support
+    database-friendly indexing.
+
+    Args:
+        vcs (VersionControlSystem): The version control system instance to parse.
+        previous_revisions (DataFrame | None): Optional DataFrame of previously
+        processed commit hashes to exclude from the current run.
+
+    Returns:
+        dict[str, DataFrame]: A dictionary of normalized DataFrames with the
+        following keys:
+            - "commit_hashes": Unique commit hashes.
+            - "authors": Unique authors based on email.
+            - "committers": Unique committers based on email.
+            - "releases": Mapped and filtered release information.
+            - "commit_logs": Normalized commit logs with references to static tables.
+
+    """
     data: dict[str, DataFrame] = {}
 
     # Extract the commit log and release revisions
