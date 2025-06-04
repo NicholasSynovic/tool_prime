@@ -159,13 +159,13 @@ class Git(VersionControlSystem):
             count.
 
         """
-        revisionCount: int = sum(1 for _ in self.repo.iter_commits())
+        revision_count: int = sum(1 for _ in self.repo.iter_commits())
         return (
             self.repo.iter_commits(
                 reverse=True,
                 date="raw",
             ),
-            revisionCount,
+            revision_count,
         )
 
     def parse_revisions(
