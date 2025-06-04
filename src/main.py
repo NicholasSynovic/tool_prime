@@ -90,7 +90,7 @@ def handle_vcs(ns: dict[str, Any], db: DB) -> None:
 
     data: dict[str, DataFrame] = parse_vcs(
         vcs=vcs,
-        previousRevisions=existing_commits_df,
+        previous_revisions=existing_commits_df,
     )
 
     db.write_df(

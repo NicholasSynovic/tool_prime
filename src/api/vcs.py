@@ -34,7 +34,7 @@ class VersionControlSystem(ABC):
         self.parseRevisionsBarMessage: str = "Parsing revisions..."
 
     @abstractmethod
-    def _initialize_repo() -> Any:
+    def _initialize_repo(self) -> Any:
         """
         Abstract method to initialize a repository with the proper VCS library.
         Subclasses must implement this method.
@@ -112,6 +112,12 @@ class Git(VersionControlSystem):
     def _initialize_repo(self) -> Repo:
         return Repo(path=self.repo_path)
 
+    def _extract_revision_from_tag(self, tag: TagReference) -> str | None:
+        try:
+            return tag.commit.hexsha
+        except ValueError:
+            return None
+
     def get_revisions(self) -> tuple[Iterator[Commit], int]:
         revisionCount: int = sum(1 for _ in self.repo.iter_commits())
         return (
@@ -165,14 +171,12 @@ class Git(VersionControlSystem):
         data: dict[str, list[str]] = {"commit_hash_id": []}
 
         tags: list[TagReference] = self.repo.tags
+        tag_revision_hashes: map[str | None] = map(
+            self._extract_revision_from_tag, tags
+        )
 
-        tagRef: TagReference
-        for tagRef in tags:
-            try:
-                data["commit_hash_id"].append(tagRef.commit.hexsha)
-            except ValueError:
-                continue
-
+        # trh is an abbreviation for tag_revision_hash
+        data["commit_hash_id"] = [trh for trh in tag_revision_hashes if trh is not None]
 
         return DataFrame(data=data)
 
