@@ -106,19 +106,59 @@ class Revision:
 
 
 class Git(VersionControlSystem):
-    def __init__(self, repo_path: Path):
+    """
+    Git version control system interface.
+
+    This class extends the VersionControlSystem base class to provide
+    Git-specific functionality using the GitPython library. It supports
+    operations such as retrieving commits, parsing revision metadata,
+    identifying releases (tags), and checking out revisions.
+
+    Attributes:
+        repo_path (Path): Path to the Git repository.
+        repo (Repo): GitPython `Repo` object for interacting with the repository.
+
+    """
+
+    def __init__(self, repo_path: Path) -> None:
+        """
+        Initialize the Git handler with the given repository path.
+
+        Args:
+            repo_path (Path): The file system path to the root of the repository.
+
+        """
         super().__init__(repo_path=repo_path)
 
     def _initialize_repo(self) -> Repo:
+        """
+        Initialize and return a GitPython Repo object for the repository path.
+
+        Returns:
+            Repo: A GitPython `Repo` instance pointing to the specified repository.
+
+        """
         return Repo(path=self.repo_path)
 
-    def _extract_revision_from_tag(self, tag: TagReference) -> str | None:
+    def _extract_revision_hash_from_tag(self, tag: TagReference) -> str | None:
         try:
             return tag.commit.hexsha
         except ValueError:
             return None
 
     def get_revisions(self) -> tuple[Iterator[Commit], int]:
+        """
+        Retrieve an iterator of all commits along with the total count.
+
+        Returns a tuple containing
+        - An iterator over commits in chronological order (oldest to newest).
+        - The total number of commits in the repository.
+
+        Returns:
+            tuple[Iterator[Commit], int]: A tuple of commit iterator and commit
+            count.
+
+        """
         revisionCount: int = sum(1 for _ in self.repo.iter_commits())
         return (
             self.repo.iter_commits(
@@ -132,6 +172,26 @@ class Git(VersionControlSystem):
         self,
         revisions: tuple[Iterator[Commit], int],
     ) -> DataFrame:
+        """
+        Parse a sequence of Git commits into a structured DataFrame.
+
+        Iterates over a provided iterator of Git `Commit` objects, extracting relevant
+        metadata from each commit such as author, committer, timestamps, GPG signature,
+        commit message, parents, and co-authors. The data is structured into
+        dictionaries and collected into a DataFrame. A progress bar is displayed
+        during processing.
+
+        Args:
+            revisions (tuple[Iterator[Commit], int]): A tuple containing:
+                - An iterator over `Commit` objects.
+                - An integer representing the total number of revisions (for
+                    progress bar tracking).
+
+        Returns:
+            DataFrame: A pandas DataFrame where each row represents a parsed commit with
+            structured metadata fields.
+
+        """
         data: list[dict] = []
 
         with Bar(
@@ -168,6 +228,18 @@ class Git(VersionControlSystem):
         return DataFrame(data=data)
 
     def get_release_revisions(self) -> DataFrame:
+        """
+        Extract commit hashes associated with Git tags (releases).
+
+        This method iterates through all tags in the repository, extracts the
+        commit hash each tag points to (if valid), and returns them in a
+        DataFrame under the column "commit_hash_id".
+
+        Returns:
+            DataFrame: A DataFrame containing a single column, "commit_hash_id",
+            which lists the commit hashes corresponding to valid tags.
+
+        """
         data: dict[str, list[str]] = {"commit_hash_id": []}
 
         tags: list[TagReference] = self.repo.tags
