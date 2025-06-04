@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
+from collections.abc import Iterator
 
 from git import Commit, Repo, TagReference
 from git.exc import InvalidGitRepositoryError
@@ -17,72 +18,49 @@ from src.api.utils import (
 
 
 class VersionControlSystem(ABC):
-    """
-    Abstract base class for interacting with version control systems.
-    Defines a common interface for retrieving information about revisions.
-    """
-
-    def __init__(self, repo_path: Path):
+    def __init__(self, repo_path: Path) -> None:
         """
         Initializes the VersionControlSystem object.
 
         Args:
             repo_path (Path): Path to the repository.
+
         """
         self.repo_path: Path = repo_path
         self.repo: Repo | Any = self._initialize_repo()
         self.parseRevisionsBarMessage: str = "Parsing revisions..."
 
     @abstractmethod
-    def _initialize_repo(self) -> Any:
-        """
-        Abstract method to initialize a repository with the proper VCS library.
-        Subclasses must implement this method.
-        """
-        pass
+    def _initialize_repo(self) -> Any: ...
 
     @abstractmethod
-    def get_revisions(self) -> tuple[Any, int]:
-        """
-        Abstract method to retrieve revisions and the number of revisions.
-        Revisions are retrieved from the oldest revision to the newest.
-        Subclasses must implement this method.
-        """
-        pass
+    def get_revisions(self) -> tuple[Any, int]: ...
 
     @abstractmethod
-    def parse_revisions(self, revisions: Any) -> DataFrame:
-        """
-        Abstract method to parse a list[Revisions] and extract relevant data
-        Subclasses must implement this method.
-        """
-        pass
+    def parse_revisions(self, revisions: Any) -> DataFrame: ...
 
     @abstractmethod
-    def get_release_revisions(self) -> DataFrame:
-        pass
+    def get_release_revisions(self) -> DataFrame: ...
 
     @abstractmethod
-    def checkout_revision(self, revision_hash: str) -> None:
-        pass
+    def checkout_revision(self, revision_hash: str) -> None: ...
 
     @abstractmethod
-    def checkout_most_recent_revision(self) -> None:
-        pass
+    def checkout_most_recent_revision(self) -> None: ...
 
 
 class Revision:
     def __init__(
         self,
         author: str,
-        authorEmail: str,
-        authoredDatetime: datetime,
-        coAuthors: list[str],
-        coAuthorEmails: list[str],
-        commitHash: str,
-        committedDatetime: datetime,
+        author_email: str,
+        authored_datetime: datetime,
+        co_authors: list[str],
+        co_author_emails: list[str],
+        commit_hash: str,
+        committed_datetime: datetime,
         committer: str,
-        committerEmail: str,
+        committer_email: str,
         encoding: str,
         message: str,
         gpgsign: str,
@@ -90,14 +68,14 @@ class Revision:
     ):
         self.data: dict[str, Any] = {
             "author": author,
-            "author_email": authorEmail,
-            "authored_datetime": authoredDatetime,
-            "co_authors": coAuthors,
-            "co_author_emails": coAuthorEmails,
-            "commit_hash": commitHash,
-            "committed_datetime": committedDatetime,
+            "author_email": author_email,
+            "authored_datetime": authored_datetime,
+            "co_authors": co_authors,
+            "co_author_emails": co_author_emails,
+            "commit_hash": commit_hash,
+            "committed_datetime": committed_datetime,
             "committer": committer,
-            "committer_email": committerEmail,
+            "committer_email": committer_email,
             "encoding": encoding,
             "gpgsign": gpgsign,
             "message": message,
@@ -197,20 +175,20 @@ class Git(VersionControlSystem):
                 data.append(
                     Revision(
                         author=commit.author.name,
-                        authorEmail=commit.author.email,
-                        authoredDatetime=commit.authored_datetime.astimezone(
+                        author_email=commit.author.email,
+                        authored_datetime=commit.authored_datetime.astimezone(
                             tz=timezone.utc
                         ),
-                        coAuthors=[co_author.name for co_author in commit.co_authors],
-                        coAuthorEmails=[
+                        co_authors=[co_author.name for co_author in commit.co_authors],
+                        co_author_emails=[
                             co_author.email for co_author in commit.co_authors
                         ],
-                        commitHash=commit.hexsha,
-                        committedDatetime=commit.committed_datetime.astimezone(
+                        commit_hash=commit.hexsha,
+                        committed_datetime=commit.committed_datetime.astimezone(
                             tz=timezone.utc
                         ),
                         committer=commit.committer.name,
-                        committerEmail=commit.committer.email,
+                        committer_email=commit.committer.email,
                         encoding=commit.encoding,
                         gpgsign=commit.gpgsig,
                         message=commit.message,
