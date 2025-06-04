@@ -140,12 +140,6 @@ class Git(VersionControlSystem):
         """
         return Repo(path=self.repo_path)
 
-    def _extract_revision_hash_from_tag(self, tag: TagReference) -> str | None:
-        try:
-            return tag.commit.hexsha
-        except ValueError:
-            return None
-
     def get_revisions(self) -> tuple[Iterator[Commit], int]:
         """
         Retrieve an iterator of all commits along with the total count.
@@ -244,7 +238,7 @@ class Git(VersionControlSystem):
 
         tags: list[TagReference] = self.repo.tags
         tag_revision_hashes: map[str | None] = map(
-            self._extract_revision_from_tag, tags
+            extract_revision_hash_from_git_tag, tags
         )
 
         # trh is an abbreviation for tag_revision_hash
@@ -422,3 +416,23 @@ def parse_vcs(
     data["commit_logs"] = commit_log_df
 
     return data
+
+
+def extract_revision_hash_from_git_tag(git_tag: TagReference) -> str | None:
+    """
+    Extract the commit hash from a Git tag.
+
+    Attempts to resolve the provided Git tag to its associated commit and
+    return the commit hash. Returns None if the tag cannot be resolved.
+
+    Args:
+        git_tag (TagReference): A GitPython TagReference object.
+
+    Returns:
+        str | None: The commit hash (SHA-1) if resolvable, otherwise None.
+
+    """
+    try:
+        return git_tag.commit.hexsha
+    except ValueError:
+        return None
