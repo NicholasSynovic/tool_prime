@@ -169,11 +169,10 @@ class Git(VersionControlSystem):
         tagRef: TagReference
         for tagRef in tags:
             try:
-                tagRef.commit
+                data["commit_hash_id"].append(tagRef.commit.hexsha)
             except ValueError:
                 continue
 
-            data["commit_hash_id"].append(tagRef.commit.hexsha)
 
         return DataFrame(data=data)
 
