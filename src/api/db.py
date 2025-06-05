@@ -1,3 +1,10 @@
+"""
+DB executor and interface.
+
+Copyright (C) 2025 Nicholas M. Synovic.
+
+"""
+
 from pathlib import Path
 
 import pandas as pd
@@ -20,7 +27,7 @@ from src.api.types import validate_df
 
 
 class DB:
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self.dbPath: Path = db_path
         self.engine: Engine = create_engine(url=f"sqlite:///{self.dbPath}")
         self.metadata: MetaData = MetaData()
@@ -120,7 +127,7 @@ class DB:
 
         return True
 
-    def read_table(self, table: str, model: BaseModel) -> DataFrame:
+    def read_table(self, table: str, model: type[BaseModel]) -> DataFrame:
         df: DataFrame = pd.read_sql_table(
             table_name=table,
             con=self.engine,
@@ -130,9 +137,3 @@ class DB:
         validate_df(model=model, df=df)
 
         return df
-
-
-if __name__ == "__main__":
-    db: DB = DB(db_path=":memory:")
-    db.create_tables()
-    print(db.metadata.tables)

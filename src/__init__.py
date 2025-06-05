@@ -1,3 +1,10 @@
+"""
+Top level __init__.py.
+
+Copyright (C) 2025 Nicholas M. Synovic.
+
+"""
+
 PROG: str = "prime"
 DESCRIPTION: str = "PRocess Internal MEtrics"
 EPILOG: str = (
