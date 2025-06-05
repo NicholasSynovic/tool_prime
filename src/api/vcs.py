@@ -18,10 +18,10 @@ from progress.bar import Bar
 from typing import NamedTuple
 
 from src.api.utils import (
-    copyDFColumnsAndRemoveDuplicateRowsByColumn,
-    copyDFColumnsToDF,
-    replaceDFValueInColumnWithIndexReference,
-    replaceDFValueInColumnWithlistOfIndexReferences,
+    copy_dataframe_cols_and_remove_duplicate_rows_by_col,
+    copy_dataframe_columns_to_dataframe,
+    replace_dataframe_value_column_with_index_reference,
+    replace_dataframe_value_column_with_index_reference_list,
 )
 
 
@@ -374,23 +374,23 @@ def parse_vcs(
         ]
 
     # Copy static information to output data structure
-    data["commit_hashes"] = copyDFColumnsToDF(
+    data["commit_hashes"] = copy_dataframe_columns_to_dataframe(
         df=commit_log_df,
         columns=["commit_hash"],
     )
-    data["authors"] = copyDFColumnsAndRemoveDuplicateRowsByColumn(
+    data["authors"] = copy_dataframe_cols_and_remove_duplicate_rows_by_col(
         df=commit_log_df,
         columns=["author", "author_email"],
         checkColumn="author_email",
     )
-    data["committers"] = copyDFColumnsAndRemoveDuplicateRowsByColumn(
+    data["committers"] = copy_dataframe_cols_and_remove_duplicate_rows_by_col(
         df=commit_log_df,
         columns=["committer", "committer_email"],
         checkColumn="committer_email",
     )
 
     # Replace commit log information with the index to static DataFrames
-    releases_df = replaceDFValueInColumnWithIndexReference(
+    releases_df = replace_dataframe_value_column_with_index_reference(
         df_1=releases_df,
         df_2=data["commit_hashes"],
         df_1_col="commit_hash_id",
@@ -399,19 +399,19 @@ def parse_vcs(
     releases_df = releases_df.dropna(how="any", ignore_index=True)
     releases_df["commit_hash_id"] = releases_df["commit_hash_id"].apply(int)
 
-    commit_log_df = replaceDFValueInColumnWithIndexReference(
+    commit_log_df = replace_dataframe_value_column_with_index_reference(
         df_1=commit_log_df,
         df_2=data["commit_hashes"],
         df_1_col="commit_hash",
         df_2_col="commit_hash",
     )
-    commit_log_df = replaceDFValueInColumnWithIndexReference(
+    commit_log_df = replace_dataframe_value_column_with_index_reference(
         df_1=commit_log_df,
         df_2=data["authors"],
         df_1_col="author_email",
         df_2_col="author_email",
     )
-    commit_log_df = replaceDFValueInColumnWithIndexReference(
+    commit_log_df = replace_dataframe_value_column_with_index_reference(
         df_1=commit_log_df,
         df_2=data["committers"],
         df_1_col="committer_email",
@@ -420,13 +420,13 @@ def parse_vcs(
 
     # Replace commit log information with a list of indicies from static
     # DataFrames
-    commit_log_df = replaceDFValueInColumnWithlistOfIndexReferences(
+    commit_log_df = replace_dataframe_value_column_with_index_reference_list(
         df_1=commit_log_df,
         df_2=data["authors"],
         df_1_col="co_author_emails",
         df_2_col="author_email",
     )
-    commit_log_df = replaceDFValueInColumnWithlistOfIndexReferences(
+    commit_log_df = replace_dataframe_value_column_with_index_reference_list(
         df_1=commit_log_df,
         df_2=data["commit_hashes"],
         df_1_col="parents",

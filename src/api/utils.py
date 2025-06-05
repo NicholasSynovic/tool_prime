@@ -1,3 +1,10 @@
+"""
+Utility DataFrame modification functions.
+
+Copyright (C) 2025 Nicholas M. Synovic.
+
+"""
+
 from json import dumps
 from typing import Any
 
@@ -5,17 +12,39 @@ from pandas import DataFrame, Series
 from progress.bar import Bar
 
 
-def copyDFColumnsToDF(df: DataFrame, columns: list[str]) -> DataFrame:
+def copy_dataframe_columns_to_dataframe(
+    df: DataFrame,
+    columns: list[str],
+) -> DataFrame:
+    """
+    Create a new DataFrame containing a copy of specific columns.
+
+    Args:
+        df (DataFrame): The source pandas DataFrame.
+        columns (list[str]): A list of column names to copy.
+
+    Returns:
+        DataFrame: A new DataFrame containing only the specified columns, copied
+            from the original.
+
+    """
     return df[columns].copy()
 
 
-def removeDuplicateDFRows(df: DataFrame, column: str) -> DataFrame:
+def remove_duplicate_dataframe_rows(df: DataFrame, column: str) -> DataFrame:
     """
-    Keeps the first instance in a column.
+    Remove duplicate rows from a DataFrame based on the values in a specified column.
 
-    Replaces the index after dropping duplicate rows.
+    This function identifies and removes duplicate rows where the values in the
+    specified column are identical.
 
-    Returns DataFrame `df`
+    Args:
+        df (DataFrame): The DataFrame to process.
+        column (str): The name of the column to check for duplicates.
+
+    Returns:
+        DataFrame: A new DataFrame with duplicate rows removed, preserving the first
+        occurrence.
 
     """
     return df.drop_duplicates(
@@ -25,25 +54,55 @@ def removeDuplicateDFRows(df: DataFrame, column: str) -> DataFrame:
     )
 
 
-def copyDFColumnsAndRemoveDuplicateRowsByColumn(
-    df: DataFrame, columns: list[str], checkColumn: str
+def copy_dataframe_cols_and_remove_duplicate_rows_by_col(
+    df: DataFrame,
+    keep_columns: list[str],
+    unique_column: str,
 ) -> DataFrame:
-    dfCopy: DataFrame = copyDFColumnsToDF(df=df, columns=columns)
-    removeDuplicateDFRows(df=dfCopy, column=checkColumn)
-    return dfCopy
+    """
+    Copy columns from a DataFrame and remove duplicate rows based on a column.
+
+    This function creates a shallow copy of selected columns from the input DataFrame
+    and removes any duplicate rows based on the values in the specified unique column.
+
+    Args:
+        df (DataFrame): The source pandas DataFrame.
+        keep_columns (list[str]): List of column names to copy from the original
+            DataFrame.
+        unique_column (str): Column name to use for identifying and removing duplicate
+            rows.
+
+    Returns:
+        DataFrame: A new DataFrame with the selected columns and unique rows based
+        on `unique_column`.
+
+    """
+    df_copy: DataFrame = copy_dataframe_columns_to_dataframe(
+        df=df, columns=keep_columns
+    )
+    return remove_duplicate_dataframe_rows(df=df_copy, column=unique_column)
 
 
-def replaceDFValueInColumnWithIndexReference(
+def replace_dataframe_value_column_with_index_reference(
     df_1: DataFrame,
     df_2: DataFrame,
     df_1_col: str,
     df_2_col: str,
 ) -> DataFrame:
     """
-    Replaces the values in DataFrame `df_1` in column `df_1_col` by the index of
-    the values in DataFrame `df_2` in column `df_2_col`.
+    Replace values in a column of DataFrame df_1 with an index reference from  df_2.
 
-    Returns DataFrame `df_1`
+    This function iterates through the specified column of df_1 and replaces each value
+    with the index of the corresponding value in df_2.
+
+    Args:
+        df_1 (DataFrame): The DataFrame to modify.
+        df_2 (DataFrame): The DataFrame containing the index references.
+        df_1_col (str): The name of the column in df_1 to modify.
+        df_2_col (str): The name of the column in df_2 to use for index references.
+
+    Returns:
+        DataFrame: The modified DataFrame with values replaced by index references.
 
     """
     value_to_index = df_2.reset_index().set_index(df_2_col)["index"].to_dict()
@@ -53,17 +112,26 @@ def replaceDFValueInColumnWithIndexReference(
     return df_1
 
 
-def replaceDFValueInColumnWithlistOfIndexReferences(
+def replace_dataframe_value_column_with_index_reference_list(
     df_1: DataFrame,
     df_2: DataFrame,
     df_1_col: str,
     df_2_col: str,
 ) -> DataFrame:
     """
-    Replace the values stored in a list in DataFrame `df_1` in column `df_1_col`
-    by the index of the values in DataFrame `df_2` in column `df_2_col`.
+    Replace values in a column of DataFrame df_1 with index references from df_2.
 
-    Returns DataFrame `df_1`
+    This function iterates through the specified column of df_1 and replaces each value
+    with a dictionary containing the index of the corresponding value in df_2.
+
+    Args:
+        df_1 (DataFrame): The DataFrame to modify.
+        df_2 (DataFrame): The DataFrame containing the index references.
+        df_1_col (str): The name of the column in df_1 to modify.
+        df_2_col (str): The name of the column in df_2 to use for index references.
+
+    Returns:
+        DataFrame: The modified DataFrame with values replaced by index references.
 
     """
     value_to_index = df_2.reset_index().set_index(df_2_col)["index"].to_dict()
@@ -80,7 +148,7 @@ def replaceDFValueInColumnWithlistOfIndexReferences(
                 replacement_index = value_to_index.get(value)
                 new_list.append({df_2_col: replacement_index})
 
-            df_1.at[idx, df_1_col] = new_list
+            df_1.at[idx, df_1_col] = new_list  # noqa: PD008
             bar.next()
 
     df_1[df_1_col] = df_1[df_1_col].apply(
