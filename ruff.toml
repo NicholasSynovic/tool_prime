@@ -84,7 +84,7 @@ select = [
     "FURB",
     "RUF",
 ]
-ignore = ["D203", "D212", "COM812"]
+ignore = ["D203", "D212", "COM812", "S404"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 # fixable = ["ALL"]
