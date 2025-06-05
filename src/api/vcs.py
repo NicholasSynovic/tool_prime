@@ -380,13 +380,13 @@ def parse_vcs(
     )
     data["authors"] = copy_dataframe_cols_and_remove_duplicate_rows_by_col(
         df=commit_log_df,
-        columns=["author", "author_email"],
-        checkColumn="author_email",
+        keep_columns=["author", "author_email"],
+        unique_column="author_email",
     )
     data["committers"] = copy_dataframe_cols_and_remove_duplicate_rows_by_col(
         df=commit_log_df,
-        columns=["committer", "committer_email"],
-        checkColumn="committer_email",
+        keep_columns=["committer", "committer_email"],
+        unique_column="committer_email",
     )
 
     # Replace commit log information with the index to static DataFrames
