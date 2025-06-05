@@ -27,7 +27,45 @@ from src.api.types import validate_df
 
 
 class DB:
+    """
+    DB executor and interface.
+
+    Provides functionality to interact with a SQLite database using SQLAlchemy.
+    This class manages the creation of tables, and facilitates reading from and
+    writing to the database using pandas DataFrames. It ensures data integrity
+    through validation against Pydantic models.
+
+    Attributes:
+        dbPath (Path): The file path to the SQLite database.
+        engine (Engine): SQLAlchemy engine for database connection and operations.
+        metadata (MetaData): SQLAlchemy MetaData object for schema management.
+
+    Methods:
+        create_tables(): Defines and creates tables for storing commit-related
+            information.
+        write_df(df, table, model): Writes a DataFrame to a SQL table with validation.
+        read_table(table, model): Reads data from a SQL table into a DataFrame
+            with validation.
+
+    """
+
     def __init__(self, db_path: Path) -> None:
+        """
+        Initialize the database connection and metadata.
+
+        Sets up a connection to a SQLite database using SQLAlchemy, with the database
+        path provided during instantiation. Initializes the metadata object for managing
+        the database schema and calls the method to create tables.
+
+        Args:
+            db_path (Path): The file path to the SQLite database.
+
+        Attributes:
+            dbPath (Path): Stores the path to the SQLite database.
+            engine (Engine): SQLAlchemy engine for database connection and operations.
+            metadata (MetaData): SQLAlchemy MetaData object for schema management.
+
+        """
         self.dbPath: Path = db_path
         self.engine: Engine = create_engine(url=f"sqlite:///{self.dbPath}")
         self.metadata: MetaData = MetaData()
@@ -35,6 +73,26 @@ class DB:
         self.create_tables()
 
     def create_tables(self) -> None:
+        """
+        Create database tables for storing commit-related information.
+
+        Defines the schema for several tables using SQLAlchemy's `Table` and `Column`
+        constructs. These tables are designed to store metadata related to Git commits,
+        including commit hashes, releases, authors, committers, commit logs, and file
+        size information. Foreign key constraints are used to establish relationships
+        between tables, ensuring referential integrity.
+
+        Tables:
+            - commit_hashes: Stores unique commit hashes.
+            - releases: Stores release information linked to commit hashes.
+            - authors: Stores author names and emails.
+            - committers: Stores committer names and emails.
+            - commit_logs: Stores detailed commit log information, including authorship,
+                commit details, and relationships to other commits.
+            - size: Stores file size metrics for each commit, including language,
+                filename, and various line counts.
+
+        """
         _: Table = Table(
             "commit_hashes",
             self.metadata,
@@ -111,7 +169,28 @@ class DB:
 
         self.metadata.create_all(bind=self.engine, checkfirst=True)
 
-    def write_df(self, df: DataFrame, table: str, model: BaseModel) -> bool:
+    def write_df(self, df: DataFrame, table: str, model: type[BaseModel]) -> bool:
+        """
+        Write a DataFrame to a SQL table with validation against a specified model.
+
+        Validates the provided DataFrame against a given Pydantic `BaseModel` to ensure
+        data integrity and consistency. If validation passes, the DataFrame is written
+        to the specified SQL table using the database engine associated with the
+        instance. The data is appended to the table, and an index column labeled
+        'id' is included. If a database integrity error occurs during the write
+        operation, the function returns `False`.
+
+        Args:
+            df (DataFrame): The pandas DataFrame to be written to the SQL table.
+            table (str): The name of the SQL table where the DataFrame will be appended.
+            model (type[BaseModel]): A Pydantic model class used to validate
+                the DataFrame before writing to the database.
+
+        Returns:
+            bool: `True` if the DataFrame is successfully written to the SQL table,
+                `False` if an integrity error occurs during the write operation.
+
+        """
         validate_df(model=model, df=df)
 
         try:
@@ -128,6 +207,24 @@ class DB:
         return True
 
     def read_table(self, table: str, model: type[BaseModel]) -> DataFrame:
+        """
+        Read data from a SQL table into a DataFrame with validation.
+
+        Retrieves data from the specified SQL table using the instance's database
+        engine, loading it into a pandas DataFrame with the 'id' column set as
+        the index. The DataFrame is then validated against a given Pydantic
+        `BaseModel` to ensure data integrity and consistency before returning.
+
+        Args:
+            table (str): The name of the SQL table to read data from.
+            model (type[BaseModel]): A Pydantic model class used to validate the
+                DataFrame after reading from the database.
+
+        Returns:
+            DataFrame: A pandas DataFrame containing the data from the SQL table,
+                validated against the specified model.
+
+        """
         df: DataFrame = pd.read_sql_table(
             table_name=table,
             con=self.engine,
