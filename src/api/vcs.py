@@ -294,7 +294,7 @@ class Git(VersionControlSystem):
 
         """
         commit: Commit = self.repo.commit(rev=revision_hash)
-        self.repo.git.checkout(commit)
+        self.repo.git.checkout(commit, force=True)
 
     def checkout_most_recent_revision(self) -> None:
         """
