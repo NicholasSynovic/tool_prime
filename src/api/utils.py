@@ -5,6 +5,8 @@ Copyright (C) 2025 Nicholas M. Synovic.
 
 """
 
+from requests import Response, post
+
 from json import dumps
 from typing import Any
 
@@ -158,3 +160,34 @@ def replace_dataframe_value_column_with_index_reference_list(
     df_1[df_1_col] = df_1[df_1_col].apply(lambda x: dumps(obj=x))
 
     return df_1
+
+
+def query_graphql(
+    url: str,
+    json_query: str,
+    headers: dict[str, str],
+    timeout: int = 60,
+) -> Response:
+    """
+    Send a GraphQL query to the specified endpoint.
+
+    Executes a POST request to the given GraphQL URL with the specified query,
+    headers, and optional timeout. Returns the HTTP response.
+
+    Args:
+        url (str): The GraphQL endpoint URL.
+        json_query (str): The GraphQL query string to send.
+        headers (dict[str, str]): A dictionary of HTTP headers to include in the
+            request.
+        timeout (int, optional): Timeout for the request in seconds. Defaults to 60.
+
+    Returns:
+        Response: The HTTP response object from the request.
+
+    """
+    return post(
+        url=url,
+        json={"query": json_query},
+        headers=headers,
+        timeout=timeout,
+    )
