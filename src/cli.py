@@ -143,6 +143,17 @@ class CLI:
         return size_parser
 
     def issue_subparser(self) -> ArgumentParser:
+        """
+        Define and return the argument subparser for the 'issues' command.
+
+        This subparser handles command-line arguments related to retrieving GitHub
+        issue metadata for a specific repository. It configures required flags for
+        authentication, repository identification, and output location.
+
+        Returns:
+            ArgumentParser: Configured subparser for the 'issues' command.
+
+        """
         issue_parser: ArgumentParser = self.subparsers.add_parser(
             name="issues",
             help="Get issue metadata from a GitHub repository",

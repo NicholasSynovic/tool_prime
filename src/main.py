@@ -160,7 +160,23 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
     db.write_df(df=size_data, table="size", model=Size)
 
 
-def handle_issues(namespace: dict[str, Any], db: DB) -> None:
+def handle_issues(namespace: dict[str, Any], db: DB) -> None:  # noqa: ARG001
+    """
+    Retrieve all issues for a given repository and concatenate them into a  DataFrame.
+
+    This function initializes a `GitHubIssues` instance using the parameters provided
+    in `namespace`, then iteratively queries GitHub's GraphQL API for issues in pages
+    of 100 until all are retrieved. A progress bar is displayed during the process.
+    The resulting issues are combined into a single DataFrame (currently unused).
+
+    Args:
+        namespace (dict[str, Any]): A dictionary containing required keys:
+            - "issues.owner": Owner of the GitHub repository.
+            - "issues.repo_name": Name of the repository.
+            - "issues.auth": Authentication token or API key for GitHub access.
+        db (DB): A database interface or object (currently unused in this function).
+
+    """
     data: list[DataFrame] = []
 
     ghi: GitHubIssues = GitHubIssues(
@@ -185,7 +201,7 @@ def handle_issues(namespace: dict[str, Any], db: DB) -> None:
 
             bar.next()
 
-    issue_data: DataFrame = pd.concat(objs=data, ignore_index=True)
+    issue_data: DataFrame = pd.concat(objs=data, ignore_index=True)  # noqa: F841
 
 
 def main() -> None:
