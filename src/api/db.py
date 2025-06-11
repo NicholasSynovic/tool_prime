@@ -66,7 +66,7 @@ class DB:
             metadata (MetaData): SQLAlchemy MetaData object for schema management.
 
         """
-        self.dbPath: Path = db_path
+        self.dbPath: Path = db_path.resolve()
         self.engine: Engine = create_engine(url=f"sqlite:///{self.dbPath}")
         self.metadata: MetaData = MetaData()
 

@@ -59,14 +59,16 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
     """
     match namespace_key:
         case "vcs":
-            return DB(db_path=namespace["vcs.output"][0])
+            return DB(db_path=namespace["vcs.output"])
         case "size":
-            return DB(db_path=namespace["size.output"][0])
+            return DB(db_path=namespace["size.output"])
+        case "issues":
+            return DB(db_path=namespace["issues.output"])
         case _:
             return None
 
 
-def handle_vcs(ns: dict[str, Any], db: DB) -> None:
+def handle_vcs(namespace: dict[str, Any], db: DB) -> None:
     """
     Process VCS data and store it in the database.
 
@@ -74,7 +76,7 @@ def handle_vcs(ns: dict[str, Any], db: DB) -> None:
     processes it, and stores the results in the database.
 
     Args:
-        ns: A dictionary containing command-line arguments.
+        namespace: A dictionary containing command-line arguments.
         db: A DB object representing the database connection.
 
     """
@@ -83,7 +85,7 @@ def handle_vcs(ns: dict[str, Any], db: DB) -> None:
         model=CommitHashes,
     )
 
-    repository_path: Path = Path(ns["vcs.input"][0]).resolve()
+    repository_path: Path = Path(namespace["vcs.input"]).resolve()
     vcs: VersionControlSystem | int = identify_vcs(repo_path=repository_path)
     if vcs == -1:
         sys.exit(2)
@@ -104,7 +106,7 @@ def handle_vcs(ns: dict[str, Any], db: DB) -> None:
     db.write_df(df=data["releases"], table="releases", model=Releases)
 
 
-def handle_size(ns: dict[str, Any], db: DB) -> None:
+def handle_size(namespace: dict[str, Any], db: DB) -> None:
     """
     Compute and store repository size measured in lines of code into a database.
 
@@ -112,13 +114,13 @@ def handle_size(ns: dict[str, Any], db: DB) -> None:
     and stores the result in the database.
 
     Args:
-      ns: A dictionary containing command-line arguments.
+      namespace: A dictionary containing command-line arguments.
       db: A DB object representing the database connection.
 
     """
     data: list[DataFrame] = []
 
-    repo_path: Path = Path(ns["size.input"][0]).resolve()
+    repo_path: Path = Path(namespace["size.input"]).resolve()
     vcs: VersionControlSystem = identify_vcs(repo_path=repo_path)
     if vcs == -1:
         sys.exit(2)
@@ -156,6 +158,16 @@ def handle_size(ns: dict[str, Any], db: DB) -> None:
     db.write_df(df=size_data, table="size", model=Size)
 
 
+def handle_issues(namespace: dict[str, Any], db: DB) -> None:
+    data: list[DataFrame] = []
+
+    print(namespace)
+    print(namespace["issues.owner"])
+    print(namespace["issues.repo_name"])
+
+    pass
+
+
 def main() -> None:
     """
     Execute the application based on command-line arguments.
@@ -168,21 +180,23 @@ def main() -> None:
 
     """
     cli: CLI = CLI()
-    ns: dict[str, Any] = cli.parse_args().__dict__
+    namespace: dict[str, Any] = cli.parse_args().__dict__
     try:
-        namespace_key: str = get_first_namespace_key(namespace=ns)
+        namespace_key: str = get_first_namespace_key(namespace=namespace)
     except KeyError:
         sys.exit(1)
 
     # Connect to database
-    db: DB = handle_db(namespace=ns, namespace_key=namespace_key)
+    db: DB = handle_db(namespace=namespace, namespace_key=namespace_key)
 
     # Run subroutines based on command line parser
     match namespace_key:
         case "vcs":
-            handle_vcs(ns=ns, db=db)
+            handle_vcs(namespace=namespace, db=db)
         case "size":
-            handle_size(ns=ns, db=db)
+            handle_size(namespace=namespace, db=db)
+        case "issues":
+            handle_issues(namespace=namespace, db=db)
         case _:
             sys.exit(3)
 

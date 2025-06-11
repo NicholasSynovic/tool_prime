@@ -63,6 +63,9 @@ class CLI:
         # size Subparser
         self.size_parser = self.size_subparser()
 
+        # issue Subparser
+        self.issue_parser = self.issue_subparser()
+
     def vcs_subparser(self) -> ArgumentParser:
         """
         Define a subparser for parsing a project's version control system.
@@ -85,7 +88,6 @@ class CLI:
         vcs_parser.add_argument(
             "-i",
             "--input",
-            nargs=1,
             required=True,
             help="Path to project to analyze",
             type=Path,
@@ -94,7 +96,6 @@ class CLI:
         vcs_parser.add_argument(
             "-o",
             "--output",
-            nargs=1,
             required=True,
             help="Path to output SQLite3",
             type=Path,
@@ -125,7 +126,6 @@ class CLI:
         size_parser.add_argument(
             "-i",
             "--input",
-            nargs=1,
             required=True,
             help="Path to project to analyze",
             type=Path,
@@ -134,7 +134,6 @@ class CLI:
         size_parser.add_argument(
             "-o",
             "--output",
-            nargs=1,
             required=True,
             help="Path to output SQLite3",
             type=Path,
@@ -142,6 +141,47 @@ class CLI:
         )
 
         return size_parser
+
+    def issue_subparser(self) -> ArgumentParser:
+        issue_parser: ArgumentParser = self.subparsers.add_parser(
+            name="issues",
+            help="Get issue metadata from a GitHub repository",
+            prog=f"{src.PROG} issues",
+            epilog=src.EPILOG,
+        )
+
+        issue_parser.add_argument(
+            "-a",
+            "--auth",
+            required=True,
+            help="GitHub personal auth token",
+            type=str,
+            dest="issues.auth",
+        )
+        issue_parser.add_argument(
+            "--owner",
+            required=True,
+            help="Owner of a GitHub repository",
+            type=str,
+            dest="issues.owner",
+        )
+        issue_parser.add_argument(
+            "--repo-name",
+            required=True,
+            help="Name of a GitHub repository",
+            type=str,
+            dest="issues.repo_name",
+        )
+        issue_parser.add_argument(
+            "-o",
+            "--output",
+            required=True,
+            help="Path to output SQLite3",
+            type=Path,
+            dest="issues.output",
+        )
+
+        return issue_parser
 
     def parse_args(self) -> Namespace:
         """

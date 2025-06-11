@@ -1,8 +1,6 @@
 from requests import Response, post
 from pandas import DataFrame
-import pandas as pd
 from string import Template
-from datetime import datetime
 
 
 def query_graphql(
@@ -40,7 +38,10 @@ class GitHubIssues:
                 }
             }"""
         )
-        json_query = json_template.substitute(name=self.repo_name, owner=self.owner)
+        json_query = json_template.substitute(
+            name=self.repo_name,
+            owner=self.owner,
+        )
 
         headers: dict[str, str] = {
             "Authorization": f"Bearer {self.auth_key}",
@@ -56,7 +57,7 @@ class GitHubIssues:
 
         return response.json()["data"]["repository"]["issues"]["totalCount"]
 
-    def get_issues(self, cursor: str = "null") -> tuple[DataFrame, str, bool]:
+    def get_issues(self, after_cursor: str = "null") -> tuple[DataFrame, str, bool]:
         json_template: Template = Template(
             template="""query {
                 repository(name:"$name", owner:"$owner") {
@@ -84,7 +85,9 @@ class GitHubIssues:
         )
 
         json_query = json_template.substitute(
-            name=self.repo_name, owner=self.owner, cursor="null"
+            name=self.repo_name,
+            owner=self.owner,
+            cursor=after_cursor,
         )
 
         headers: dict[str, str] = {
@@ -104,13 +107,13 @@ class GitHubIssues:
         ]["pageInfo"]
 
         cursor: str = str(pageInfo["endCursor"])
-        hasNextPage: bool = bool(pageInfo["hasNextPage"])
+        has_next_page: bool = bool(pageInfo["hasNextPage"])
 
         nodes: list[dict[str, dict[str, str]]] = response.json()["data"]["repository"][
             "issues"
         ]["edges"]
 
-        return (DataFrame(data=map(lambda x: x["node"], nodes)), cursor, hasNextPage)
+        return (DataFrame(data=map(lambda x: x["node"], nodes)), cursor, has_next_page)
 
 
 ghi: GitHubIssues = GitHubIssues(owner="numpy", repo_name="numpy", auth_key="test")
