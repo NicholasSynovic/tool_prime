@@ -114,8 +114,3 @@ class GitHubIssues:
         ]["edges"]
 
         return (DataFrame(data=map(lambda x: x["node"], nodes)), cursor, has_next_page)
-
-
-ghi: GitHubIssues = GitHubIssues(owner="numpy", repo_name="numpy", auth_key="test")
-# ghi.get_total_issues()
-print(ghi.get_issues())

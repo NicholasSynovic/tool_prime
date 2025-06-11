@@ -19,6 +19,8 @@ from src.api.db import DB
 from src.api.types import Authors, CommitHashes, CommitLog, Committers, Releases, Size
 from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
 from src.cli import CLI
+from src.api.issues import GitHubIssues
+from math import ceil
 
 
 def get_first_namespace_key(namespace: dict[str, Any]) -> str:
@@ -161,11 +163,29 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
 def handle_issues(namespace: dict[str, Any], db: DB) -> None:
     data: list[DataFrame] = []
 
-    print(namespace)
-    print(namespace["issues.owner"])
-    print(namespace["issues.repo_name"])
+    ghi: GitHubIssues = GitHubIssues(
+        owner=namespace["issues.owner"],
+        repo_name=namespace["issues.repo_name"],
+        auth_key=namespace["issues.auth"],
+    )
 
-    pass
+    total_issues: int = ghi.get_total_issues()
+    total_pages: int = ceil(total_issues / 100)
+    has_next_page: bool = True
+    after_cursor: str = "null"
+    with Bar("Getting issues from GitHub...", max=total_pages) as bar:
+        while has_next_page:
+            resp: tuple[DataFrame, str, bool] = ghi.get_issues(
+                after_cursor=after_cursor,
+            )
+
+            data.append(resp[0])
+            after_cursor = f'"{resp[1]}"'
+            has_next_page = resp[2]
+
+            bar.next()
+
+    issue_data: DataFrame = pd.concat(objs=data, ignore_index=True)
 
 
 def main() -> None:
