@@ -16,11 +16,24 @@ import pandas as pd
 from pandas import DataFrame
 
 from src.api.db import DB
-from src.api.types import Authors, CommitHashes, CommitLog, Committers, Releases, Size
+from src.api.types import (
+    Authors,
+    CommitHashes,
+    CommitLog,
+    Committers,
+    Releases,
+    Size,
+    Issues,
+    IssueIDs,
+)
 from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
 from src.cli import CLI
 from src.api.issues import GitHubIssues
 from math import ceil
+from src.api.utils import (
+    copy_dataframe_columns_to_dataframe,
+    replace_dataframe_value_column_with_index_reference,
+)
 
 
 def get_first_namespace_key(namespace: dict[str, Any]) -> str:
@@ -160,9 +173,9 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
     db.write_df(df=size_data, table="size", model=Size)
 
 
-def handle_issues(namespace: dict[str, Any], db: DB) -> None:  # noqa: ARG001
+def handle_issues(namespace: dict[str, Any], db: DB) -> None:
     """
-    Retrieve all issues for a given repository and concatenate them into a  DataFrame.
+    Retrieve all issues for a given repository and concatenate them into a DataFrame.
 
     This function initializes a `GitHubIssues` instance using the parameters provided
     in `namespace`, then iteratively queries GitHub's GraphQL API for issues in pages
@@ -201,7 +214,23 @@ def handle_issues(namespace: dict[str, Any], db: DB) -> None:  # noqa: ARG001
 
             bar.next()
 
-    issue_data: DataFrame = pd.concat(objs=data, ignore_index=True)  # noqa: F841
+    issue_data: DataFrame = pd.concat(objs=data, ignore_index=True)
+
+    issue_ids: DataFrame = copy_dataframe_columns_to_dataframe(
+        df=issue_data, columns=["issue_id"]
+    )
+
+    issue_data = replace_dataframe_value_column_with_index_reference(
+        df_1=issue_data,
+        df_2=issue_ids,
+        df_1_col="issue_id",
+        df_2_col="issue_id",
+    )
+
+    issue_data = issue_data.rename(columns={"issue_id": "issue_id_key"})
+
+    db.write_df(df=issue_ids, table="issue_ids", model=IssueIDs)
+    db.write_df(df=issue_data, table="issues", model=Issues)
 
 
 def main() -> None:

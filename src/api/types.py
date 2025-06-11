@@ -169,6 +169,42 @@ class Size(BaseModel):
     commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
 
 
+class IssueIDs(BaseModel):
+    """
+    Pydantic model representing a GitHub issue ID.
+
+    Attributes:
+        issue_id (str): Unique identifier of the issue as returned by the GitHub
+            GraphQL API.
+
+    """
+
+    issue_id: str = Field(default=..., description="Issue ID")
+
+
+class Issues(BaseModel):
+    """
+    Pydantic model representing metadata for a GitHub issue.
+
+    Attributes:
+        issue_id_key (int): Index value of the related issue in the database.
+        created_at (datetime): Datetime when the issue was created.
+        closed_at (datetime): Datetime when the issue was closed.
+
+    """
+
+    issue_id_key: int = Field(
+        default=...,
+        description="Index value of related issue",
+    )
+    created_at: datetime = Field(
+        default=..., description="Datetime when an issue was created"
+    )
+    closed_at: datetime = Field(
+        default=..., description="Datetime when an issue was closed"
+    )
+
+
 def validate_df(model: type[BaseModel], df: DataFrame) -> None:
     """
     Validate each row in a DataFrame against a Pydantic model.

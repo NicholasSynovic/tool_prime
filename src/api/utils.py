@@ -90,7 +90,7 @@ def replace_dataframe_value_column_with_index_reference(
     df_2_col: str,
 ) -> DataFrame:
     """
-    Replace values in a column of DataFrame df_1 with an index reference from  df_2.
+    Replace values in a column of DataFrame df_1 with index reference from  df_2.
 
     This function iterates through the specified column of df_1 and replaces each value
     with the index of the corresponding value in df_2.

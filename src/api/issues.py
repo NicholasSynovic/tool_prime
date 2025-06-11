@@ -11,6 +11,7 @@ from string import Template
 from functools import partial
 from operator import itemgetter
 from src.api import VALID_RESPONSE_CODE
+import pandas as pd
 
 
 def query_graphql(
@@ -198,4 +199,23 @@ class GitHubIssues:
             "issues"
         ]["edges"]
 
-        return (DataFrame(data=map(itemgetter("node"), nodes)), cursor, has_next_page)
+        issue_data: DataFrame = DataFrame(data=map(itemgetter("node"), nodes))
+
+        issue_data = issue_data.rename(
+            columns={
+                "id": "issue_id",
+                "createdAt": "created_at",
+                "closedAt": "closed_at",
+            }
+        )
+
+        issue_data["created_at"] = pd.to_datetime(
+            issue_data["created_at"],
+            utc=True,
+        )
+        issue_data["closed_at"] = pd.to_datetime(
+            issue_data["closed_at"],
+            utc=True,
+        )
+
+        return (issue_data, cursor, has_next_page)
