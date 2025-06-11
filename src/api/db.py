@@ -187,6 +187,26 @@ class DB:
             ),
         )
 
+        _: Table = Table(
+            "pull_requests_id",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("pull_request_id", String),
+        )
+
+        _: Table = Table(
+            "pull_requests",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("pull_request_id_key", Integer),
+            Column("created_at", DateTime),
+            Column("closed_at", DateTime),
+            ForeignKeyConstraint(
+                ["pull_request_id_key"],
+                ["pull_requests_id.id"],
+            ),
+        )
+
         self.metadata.create_all(bind=self.engine, checkfirst=True)
 
     def write_df(self, df: DataFrame, table: str, model: type[BaseModel]) -> bool:
