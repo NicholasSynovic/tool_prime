@@ -188,7 +188,7 @@ class DB:
         )
 
         _: Table = Table(
-            "pull_requests_id",
+            "pull_request_ids",
             self.metadata,
             Column("id", Integer, primary_key=True),
             Column("pull_request_id", String),
@@ -203,7 +203,7 @@ class DB:
             Column("closed_at", DateTime),
             ForeignKeyConstraint(
                 ["pull_request_id_key"],
-                ["pull_requests_id.id"],
+                ["pull_request_ids.id"],
             ),
         )
 

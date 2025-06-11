@@ -251,18 +251,18 @@ def handle_pull_requests(namespace: dict[str, Any], db: DB) -> None:
 
     Args:
         namespace (dict[str, Any]): A dictionary containing required keys:
-            - "pull_request.owner": Owner of the GitHub repository.
-            - "pull_requestissues.repo_name": Name of the repository.
-            - "pull_request.auth": Authentication token or API key for GitHub access.
+            - "pull_requests.owner": Owner of the GitHub repository.
+            - "pull_requests.repo_name": Name of the repository.
+            - "pull_requests.auth": Authentication token or API key for GitHub access.
         db (DB): A database interface or object.
 
     """
     data: list[DataFrame] = []
 
     ghpr: GitHubPullRequests = GitHubPullRequests(
-        owner=namespace["pull_request.owner"],
-        repo_name=namespace["pull_request.repo_name"],
-        auth_key=namespace["pull_request.auth"],
+        owner=namespace["pull_requests.owner"],
+        repo_name=namespace["pull_requests.repo_name"],
+        auth_key=namespace["pull_requests.auth"],
     )
 
     total_pull_requests: int = ghpr.get_total_pull_requests()
@@ -287,14 +287,16 @@ def handle_pull_requests(namespace: dict[str, Any], db: DB) -> None:
         df=pull_requests_data, columns=["pull_request_id"]
     )
 
-    issue_data = replace_dataframe_value_column_with_index_reference(
+    pull_requests_data = replace_dataframe_value_column_with_index_reference(
         df_1=pull_requests_data,
         df_2=pull_request_ids,
         df_1_col="pull_request_id",
         df_2_col="pull_request_id",
     )
 
-    issue_data = issue_data.rename(columns={"pull_request_id": "pull_request_id_key"})
+    pull_requests_data = pull_requests_data.rename(
+        columns={"pull_request_id": "pull_request_id_key"}
+    )
 
     db.write_df(df=pull_request_ids, table="pull_request_ids", model=PullRequestIDs)
     db.write_df(df=pull_requests_data, table="pull_requests", model=PullRequests)

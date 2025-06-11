@@ -76,7 +76,7 @@ class GitHubPullRequests:
             template="""
             query {
                 repository(name:"$name", owner:"$owner") {
-                    pull_requests {
+                    pullRequests {
                         totalCount
                     }
                 },
@@ -98,7 +98,7 @@ class GitHubPullRequests:
         if response.status_code != VALID_RESPONSE_CODE:
             return -1
 
-        return response.json()["data"]["repository"]["pull requests"]["totalCount"]
+        return response.json()["data"]["repository"]["pullRequests"]["totalCount"]
 
     def get_pull_requests(
         self, after_cursor: str = "null"
@@ -128,7 +128,7 @@ class GitHubPullRequests:
         json_template: Template = Template(
             template="""query {
                 repository(name:"$name", owner:"$owner") {
-                    pull_requests(first: 100, after: $cursor) {
+                    pullRequests(first: 100, after: $cursor) {
                         edges {
                             node {
                                 id,
@@ -163,21 +163,21 @@ class GitHubPullRequests:
             return (DataFrame(), "", False)
 
         page_info: dict[str, str | bool] = response.json()["data"]["repository"][
-            "pull requests"
+            "pullRequests"
         ]["pageInfo"]
 
         cursor: str = str(page_info["endCursor"])
         has_next_page: bool = bool(page_info["hasNextPage"])
 
         nodes: list[dict[str, dict[str, str]]] = response.json()["data"]["repository"][
-            "pull requests"
+            "pullRequests"
         ]["edges"]
 
         pull_request_data: DataFrame = DataFrame(data=map(itemgetter("node"), nodes))
 
         pull_request_data = pull_request_data.rename(
             columns={
-                "id": "pull request_id",
+                "id": "pull_request_id",
                 "createdAt": "created_at",
                 "closedAt": "closed_at",
             }
