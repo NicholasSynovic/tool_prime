@@ -12,6 +12,7 @@ from progress.bar import Bar
 from src.api.size import SCC
 from pandas import Series
 import pandas as pd
+from src.api.pull_requests import GitHubPullRequests
 
 from pandas import DataFrame
 
@@ -25,6 +26,8 @@ from src.api.types import (
     Size,
     Issues,
     IssueIDs,
+    PullRequestIDs,
+    PullRequests,
 )
 from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
 from src.cli import CLI
@@ -79,6 +82,8 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
             return DB(db_path=namespace["size.output"])
         case "issues":
             return DB(db_path=namespace["issues.output"])
+        case "pull_requests":
+            return DB(db_path=namespace["pull_requests.output"])
         case _:
             return None
 
@@ -180,14 +185,15 @@ def handle_issues(namespace: dict[str, Any], db: DB) -> None:
     This function initializes a `GitHubIssues` instance using the parameters provided
     in `namespace`, then iteratively queries GitHub's GraphQL API for issues in pages
     of 100 until all are retrieved. A progress bar is displayed during the process.
-    The resulting issues are combined into a single DataFrame (currently unused).
+    The resulting issues are combined into a single DataFrame a single DataFrame
+    and stored in `db.pull_requests`.
 
     Args:
         namespace (dict[str, Any]): A dictionary containing required keys:
             - "issues.owner": Owner of the GitHub repository.
             - "issues.repo_name": Name of the repository.
             - "issues.auth": Authentication token or API key for GitHub access.
-        db (DB): A database interface or object (currently unused in this function).
+        db (DB): A database interface or object.
 
     """
     data: list[DataFrame] = []
@@ -233,6 +239,67 @@ def handle_issues(namespace: dict[str, Any], db: DB) -> None:
     db.write_df(df=issue_data, table="issues", model=Issues)
 
 
+def handle_pull_requests(namespace: dict[str, Any], db: DB) -> None:
+    """
+    Retrieve all issues for a given repository and concatenate them into a DataFrame.
+
+    This function initializes a `GitHubPullRequests` instance using the parameters
+    provided in `namespace`, then iteratively queries GitHub's GraphQL API for
+    pull requests in pages of 100 until all are retrieved. A progress bar is
+    displayed during the process. The resulting pull requests are combined into
+    a single DataFrame and stored in `db.pull_requests`.
+
+    Args:
+        namespace (dict[str, Any]): A dictionary containing required keys:
+            - "pull_request.owner": Owner of the GitHub repository.
+            - "pull_requestissues.repo_name": Name of the repository.
+            - "pull_request.auth": Authentication token or API key for GitHub access.
+        db (DB): A database interface or object.
+
+    """
+    data: list[DataFrame] = []
+
+    ghpr: GitHubPullRequests = GitHubPullRequests(
+        owner=namespace["pull_request.owner"],
+        repo_name=namespace["pull_request.repo_name"],
+        auth_key=namespace["pull_request.auth"],
+    )
+
+    total_pull_requests: int = ghpr.get_total_pull_requests()
+    total_pages: int = ceil(total_pull_requests / 100)
+    has_next_page: bool = True
+    after_cursor: str = "null"
+    with Bar("Getting pull requests from GitHub...", max=total_pages) as bar:
+        while has_next_page:
+            resp: tuple[DataFrame, str, bool] = ghpr.get_pull_requests(
+                after_cursor=after_cursor,
+            )
+
+            data.append(resp[0])
+            after_cursor = f'"{resp[1]}"'
+            has_next_page = resp[2]
+
+            bar.next()
+
+    pull_requests_data: DataFrame = pd.concat(objs=data, ignore_index=True)
+
+    pull_request_ids: DataFrame = copy_dataframe_columns_to_dataframe(
+        df=pull_requests_data, columns=["pull_request_id"]
+    )
+
+    issue_data = replace_dataframe_value_column_with_index_reference(
+        df_1=pull_requests_data,
+        df_2=pull_request_ids,
+        df_1_col="pull_request_id",
+        df_2_col="pull_request_id",
+    )
+
+    issue_data = issue_data.rename(columns={"pull_request_id": "pull_request_id_key"})
+
+    db.write_df(df=pull_request_ids, table="pull_request_ids", model=PullRequestIDs)
+    db.write_df(df=pull_requests_data, table="pull_requests", model=PullRequests)
+
+
 def main() -> None:
     """
     Execute the application based on command-line arguments.
@@ -262,6 +329,8 @@ def main() -> None:
             handle_size(namespace=namespace, db=db)
         case "issues":
             handle_issues(namespace=namespace, db=db)
+        case "pull_requests":
+            handle_pull_requests(namespace=namespace, db=db)
         case _:
             sys.exit(3)
 

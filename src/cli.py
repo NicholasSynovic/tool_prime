@@ -66,6 +66,9 @@ class CLI:
         # issue Subparser
         self.issue_parser = self.issue_subparser()
 
+        # pr Subparser
+        self.pull_request_parser = self.pull_request_subparser()
+
     def vcs_subparser(self) -> ArgumentParser:
         """
         Define a subparser for parsing a project's version control system.
@@ -193,6 +196,58 @@ class CLI:
         )
 
         return issue_parser
+
+    def pull_request_subparser(self) -> ArgumentParser:
+        """
+        Define and return the argument subparser for the 'pr' command.
+
+        This subparser handles command-line arguments related to retrieving GitHub
+        issue metadata for a specific repository. It configures required flags for
+        authentication, repository identification, and output location.
+
+        Returns:
+            ArgumentParser: Configured subparser for the 'pr' command.
+
+        """
+        pull_requests_parser: ArgumentParser = self.subparsers.add_parser(
+            name="pr",
+            help="Get pull request metadata from a GitHub repository",
+            prog=f"{src.PROG} pr",
+            epilog=src.EPILOG,
+        )
+
+        pull_requests_parser.add_argument(
+            "-a",
+            "--auth",
+            required=True,
+            help="GitHub personal auth token",
+            type=str,
+            dest="pull_requests.auth",
+        )
+        pull_requests_parser.add_argument(
+            "--owner",
+            required=True,
+            help="Owner of a GitHub repository",
+            type=str,
+            dest="pull_requests.owner",
+        )
+        pull_requests_parser.add_argument(
+            "--repo-name",
+            required=True,
+            help="Name of a GitHub repository",
+            type=str,
+            dest="pull_requests.repo_name",
+        )
+        pull_requests_parser.add_argument(
+            "-o",
+            "--output",
+            required=True,
+            help="Path to output SQLite3",
+            type=Path,
+            dest="pull_requests.output",
+        )
+
+        return pull_requests_parser
 
     def parse_args(self) -> Namespace:
         """

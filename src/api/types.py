@@ -205,6 +205,43 @@ class Issues(BaseModel):
     )
 
 
+class PullRequestIDs(BaseModel):
+    """
+    Pydantic model representing a GitHub pull request ID.
+
+    Attributes:
+        pull_request_id (str): Unique identifier of the pull request as returned
+        by the GitHub GraphQL API.
+
+    """
+
+    pull_request_id: str = Field(default=..., description="Pull request ID")
+
+
+class PullRequests(BaseModel):
+    """
+    Pydantic model representing metadata for a GitHub pull request.
+
+    Attributes:
+        pull_request_id_key (int): Index value of the related pull request in
+            the database.
+        created_at (datetime): Datetime when the pull request was created.
+        closed_at (datetime): Datetime when the pull request was closed.
+
+    """
+
+    pull_request_id_key: int = Field(
+        default=...,
+        description="Index value of related pull request",
+    )
+    created_at: datetime = Field(
+        default=..., description="Datetime when an pull request was created"
+    )
+    closed_at: datetime = Field(
+        default=..., description="Datetime when an pull request was closed"
+    )
+
+
 def validate_df(model: type[BaseModel], df: DataFrame) -> None:
     """
     Validate each row in a DataFrame against a Pydantic model.
