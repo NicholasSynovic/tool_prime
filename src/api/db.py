@@ -82,16 +82,6 @@ class DB:
         size information. Foreign key constraints are used to establish relationships
         between tables, ensuring referential integrity.
 
-        Tables:
-            - commit_hashes: Stores unique commit hashes.
-            - releases: Stores release information linked to commit hashes.
-            - authors: Stores author names and emails.
-            - committers: Stores committer names and emails.
-            - commit_logs: Stores detailed commit log information, including authorship,
-                commit details, and relationships to other commits.
-            - size: Stores file size metrics for each commit, including language,
-                filename, and various line counts.
-
         """
         _: Table = Table(
             "commit_hashes",
@@ -205,6 +195,18 @@ class DB:
                 ["pull_request_id_key"],
                 ["pull_request_ids.id"],
             ),
+        )
+
+        _: Table = Table(
+            "project_size",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("commit_hash_id", Integer),
+            Column("lines", Integer),
+            Column("code", Integer),
+            Column("comments", Integer),
+            Column("blanks", Integer),
+            Column("bytes", Integer),
         )
 
         self.metadata.create_all(bind=self.engine, checkfirst=True)

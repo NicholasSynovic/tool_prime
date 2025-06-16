@@ -242,6 +242,15 @@ class PullRequests(BaseModel):
     )
 
 
+class ProjectSize(BaseModel):
+    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
+    lines: int = Field(default=..., description="Total number of lines")
+    code: int = Field(default=..., description="Total number of code lines")
+    comments: int = Field(default=..., description="Total number of comment lines")
+    blanks: int = Field(default=..., description="Total number of blank lines")
+    bytes: int = Field(default=..., description="Total number of bytes")
+
+
 def validate_df(model: type[BaseModel], df: DataFrame) -> None:
     """
     Validate each row in a DataFrame against a Pydantic model.
