@@ -251,6 +251,21 @@ class ProjectSize(BaseModel):
     bytes: int = Field(default=..., description="Total number of bytes")
 
 
+class ProjectProductivity(BaseModel):
+    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
+    delta_lines: int = Field(default=..., description="Change in total number of lines")
+    delta_code: int = Field(
+        default=..., description="Change in total number of code lines"
+    )
+    delta_comments: int = Field(
+        default=..., description="Change in total number of comment lines"
+    )
+    delta_blanks: int = Field(
+        default=..., description="Change in total number of blank lines"
+    )
+    delta_bytes: int = Field(default=..., description="Change in total number of bytes")
+
+
 def validate_df(model: type[BaseModel], df: DataFrame) -> None:
     """
     Validate each row in a DataFrame against a Pydantic model.

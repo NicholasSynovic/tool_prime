@@ -209,6 +209,18 @@ class DB:
             Column("bytes", Integer),
         )
 
+        _: Table = Table(
+            "project_productivity",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("commit_hash_id", Integer),
+            Column("delta_lines", Integer),
+            Column("delta_code", Integer),
+            Column("delta_comments", Integer),
+            Column("delta_blanks", Integer),
+            Column("delta_bytes", Integer),
+        )
+
         self.metadata.create_all(bind=self.engine, checkfirst=True)
 
     def write_df(self, df: DataFrame, table: str, model: type[BaseModel]) -> bool:

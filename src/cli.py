@@ -70,7 +70,10 @@ class CLI:
         self.pull_request_parser = self.pull_request_subparser()
 
         # ps Subparser
-        self.project_size_parser = self.project_size_parser()
+        self.project_size_parser = self.project_size_subparser()
+
+        # pp Subparser
+        self.project_productivity_parser = self.project_productivity_subparser()
 
     def vcs_subparser(self) -> ArgumentParser:
         """
@@ -252,7 +255,7 @@ class CLI:
 
         return pull_requests_parser
 
-    def project_size_parser(self) -> None:
+    def project_size_subparser(self) -> None:
         project_size_parser: ArgumentParser = self.subparsers.add_parser(
             name="ps",
             help="Compute project size in lines of code and bytes",
@@ -267,6 +270,23 @@ class CLI:
             help="Path to SQLite3 database",
             type=Path,
             dest="project_size.output",
+        )
+
+    def project_productivity_subparser(self) -> None:
+        project_productivity_parser: ArgumentParser = self.subparsers.add_parser(
+            name="pp",
+            help="Compute project productivity",
+            prog=f"{src.PROG} pp",
+            epilog=src.EPILOG,
+        )
+
+        project_productivity_parser.add_argument(
+            "-o",
+            "--output",
+            required=True,
+            help="Path to SQLite3 database",
+            type=Path,
+            dest="project_productivity.output",
         )
 
     def parse_args(self) -> Namespace:

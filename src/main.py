@@ -13,7 +13,7 @@ from src.api.size import SCC
 from pandas import Series
 import pandas as pd
 from src.api.pull_requests import GitHubPullRequests
-from src.api.metrics import ProjectSizeMetric
+from src.api.metrics import ProjectSizeMetric, ProjectProductivityMetric
 
 from pandas import DataFrame
 
@@ -30,6 +30,7 @@ from src.api.types import (
     PullRequestIDs,
     PullRequests,
     ProjectSize,
+    ProjectProductivity,
 )
 from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
 from src.cli import CLI
@@ -88,6 +89,8 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
             return DB(db_path=namespace["pull_requests.output"])
         case "project_size":
             return DB(db_path=namespace["project_size.output"])
+        case "project_productivity":
+            return DB(db_path=namespace["project_productivity.output"])
         case _:
             return None
 
@@ -313,6 +316,19 @@ def handle_project_size(db: DB) -> None:
     db.write_df(df=project_size.data, table="project_size", model=ProjectSize)
 
 
+def handle_project_productivity(db: DB) -> None:
+    size_table: DataFrame = db.read_table(table="size", model=Size)
+    project_productivity: ProjectProductivityMetric = ProjectProductivityMetric(
+        size_table=size_table
+    )
+    project_productivity.compute()
+    db.write_df(
+        df=project_productivity.data,
+        table="project_productivity",
+        model=ProjectProductivity,
+    )
+
+
 def main() -> None:
     """
     Execute the application based on command-line arguments.
@@ -346,6 +362,8 @@ def main() -> None:
             handle_pull_requests(namespace=namespace, db=db)
         case "project_size":
             handle_project_size(db=db)
+        case "project_productivity":
+            handle_project_productivity(db=db)
         case _:
             sys.exit(3)
 
