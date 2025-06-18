@@ -1,5 +1,5 @@
 """
-Utility DataFrame modification functions.
+Utility functions.
 
 Copyright (C) 2025 Nicholas M. Synovic.
 

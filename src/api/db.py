@@ -145,7 +145,7 @@ class DB:
             Column("id", Integer, primary_key=True),
             Column("commit_hash_id", Integer),
             Column("language", String),
-            Column("filename", String),
+            Column("provider", String),
             Column("lines", Integer),
             Column("code", Integer),
             Column("comments", Integer),

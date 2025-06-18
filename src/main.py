@@ -61,7 +61,7 @@ def get_first_namespace_key(namespace: dict[str, Any]) -> str:
     return {key.split(".")[0] for key in namespace}.pop()
 
 
-def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
+def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:  # noqa: PLR0911
     """
     Connect to the database based on the provided namespace key.
 
@@ -169,12 +169,9 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
 
             scc_data: DataFrame = scc.run()
             scc_data["commit_hash_id"] = idx
+            scc_data = scc_data.drop(columns=["Filename", "Complexity", "ULOC"])
 
-            data.append(
-                scc_data.drop(
-                    columns=["Provider", "Complexity", "ULOC"],
-                )
-            )
+            data.append(scc_data)
             bar.next()
 
     vcs.checkout_most_recent_revision()
@@ -310,6 +307,28 @@ def handle_pull_requests(namespace: dict[str, Any], db: DB) -> None:
 
 
 def handle_project_size(db: DB) -> None:
+    """
+    Handle the computation and storage of project size metrics.
+
+    This function reads the 'size' table from the database, computes the project
+    size metrics, and writes the results back to the 'project_size' table in the
+    database.
+
+    The function performs the following steps:
+    1. Reads the 'size' table from the database using the specified model
+        `Size`.
+    2. Initializes a `ProjectSizeMetric` object with the data from the 'size'
+        table.
+    3. Computes the project size metrics using the `compute` method of
+        `ProjectSizeMetric`.
+    4. Writes the computed metrics to the 'project_size' table in the database
+        using the specified model `ProjectSize`.
+
+    Args:
+        db (DB): The database connection object used to read from and write to
+            the database.
+
+    """
     size_table: DataFrame = db.read_table(table="size", model=Size)
     project_size: ProjectSizeMetric = ProjectSizeMetric(size_table=size_table)
     project_size.compute()
@@ -317,6 +336,28 @@ def handle_project_size(db: DB) -> None:
 
 
 def handle_project_productivity(db: DB) -> None:
+    """
+    Handle the computation and storage of project productivity metrics.
+
+    This function reads the 'size' table from the database, computes the project
+    productivity metrics, and writes the results back to the
+    'project_productivity' table in the database.
+
+    The function performs the following steps:
+    1. Reads the 'size' table from the database using the specified model
+        `Size`.
+    2. Initializes a `ProjectProductivityMetric` object with the data from the
+        'size' table.
+    3. Computes the project productivity metrics using the `compute` method of
+        `ProjectProductivityMetric`.
+    4. Writes the computed metrics to the 'project_productivity' table in the
+        database using the specified model `ProjectProductivity`.
+
+    Args:
+        db (DB): The database connection object used to read from and write to
+            the database.
+
+    """
     size_table: DataFrame = db.read_table(table="size", model=Size)
     project_productivity: ProjectProductivityMetric = ProjectProductivityMetric(
         size_table=size_table

@@ -158,9 +158,7 @@ class Size(BaseModel):
     """
 
     language: str = Field(default=..., description="Identified programming language")
-    filename: str = Field(
-        default=..., description="Name of the file; not the full path"
-    )
+    provider: str = Field(default=..., description="Absolute filepath")
     lines: int = Field(default=..., description="Number of lines in the file")
     code: int = Field(default=..., description="Number of lines of code")
     comments: int = Field(default=..., description="Number of lines of comments")
@@ -243,6 +241,24 @@ class PullRequests(BaseModel):
 
 
 class ProjectSize(BaseModel):
+    """
+    A Pydantic model representing the size metrics of a project at a commit.
+
+    Each attribute is initialized with a default value, which must be provided
+    when creating an instance of the model.
+
+    Attributes:
+        commit_hash_id (int): The unique identifier for the commit hash from the
+            database.
+        lines (int): The total number of lines in the project, including code,
+            comments, and blanks.
+        code (int): The total number of lines that contain code.
+        comments (int): The total number of lines that contain comments.
+        blanks (int): The total number of blank lines.
+        bytes (int): The total number of bytes used by the project files.
+
+    """
+
     commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
     lines: int = Field(default=..., description="Total number of lines")
     code: int = Field(default=..., description="Total number of code lines")
@@ -252,6 +268,28 @@ class ProjectSize(BaseModel):
 
 
 class ProjectProductivity(BaseModel):
+    """
+    A Pydantic model representing the productivity metrics of a project.
+
+    Each attribute is initialized with a default value, which must be provided
+    when creating an instance of the model. This model is useful for tracking
+    the differences in project size metrics between consecutive commits.
+
+    Attributes:
+        commit_hash_id (int): The unique identifier for the commit hash from the
+            database.
+        delta_lines (int): The change in the total number of lines in the
+            project, including code, comments, and blanks.
+        delta_code (int): The change in the total number of lines that contain
+            code.
+        delta_comments (int): The change in the total number of lines that
+            contain comments.
+        delta_blanks (int): The change in the total number of blank lines.
+        delta_bytes (int): The change in the total number of bytes used by the
+            project files.
+
+    """
+
     commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
     delta_lines: int = Field(default=..., description="Change in total number of lines")
     delta_code: int = Field(

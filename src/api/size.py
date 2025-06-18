@@ -56,6 +56,10 @@ class SCC:
             DataFrame: A pandas DataFrame representing the output.
 
         """
+        # Dirty string indexing trick based on the gaurentee that the parent
+        # path does not change
+        parent_path_string_length: int = len(str(self.directory)) + 1
+
         args: list[str] = (
             [self.command] + shlex.split(s=self.options) + [str(self.directory)]  # noqa: RUF005
         )
@@ -67,4 +71,11 @@ class SCC:
             check=False,
         )
 
-        return pd.read_csv(filepath_or_buffer=StringIO(result.stdout))
+        data: DataFrame = pd.read_csv(filepath_or_buffer=StringIO(result.stdout))
+
+        # Keep everything after the parent path
+        data["Provider"] = data["Provider"].apply(
+            lambda x: str(Path(x).resolve())[parent_path_string_length::]
+        )
+
+        return data
