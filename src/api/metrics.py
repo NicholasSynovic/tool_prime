@@ -35,3 +35,19 @@ class ProjectProductivityMetric:
             pd.to_numeric,
             downcast="integer",
         )
+
+
+class BusFactorMetric:
+    def __init__(
+        self,
+        commits_logs_table: DataFrame,
+        project_size_table: DataFrame,
+        committers_table: DataFrame,
+    ) -> None:
+        self.commits_logs_table: DataFrame = commits_logs_table
+        self.project_size_table: DataFrame = project_size_table
+        self.committers_table: DataFrame = committers_table
+        self.data: DataFrame = DataFrame()
+
+    def compute(self) -> None:
+        pass

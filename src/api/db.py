@@ -207,6 +207,10 @@ class DB:
             Column("comments", Integer),
             Column("blanks", Integer),
             Column("bytes", Integer),
+            ForeignKeyConstraint(
+                ["commit_hash_id"],
+                ["commit_hashes.id"],
+            ),
         )
 
         _: Table = Table(
@@ -219,6 +223,10 @@ class DB:
             Column("delta_comments", Integer),
             Column("delta_blanks", Integer),
             Column("delta_bytes", Integer),
+            ForeignKeyConstraint(
+                ["commit_hash_id"],
+                ["commit_hashes.id"],
+            ),
         )
 
         self.metadata.create_all(bind=self.engine, checkfirst=True)
