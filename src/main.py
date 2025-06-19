@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from pandas import DataFrame, Series, Timestamp
+from pandas import DataFrame, Timestamp
 from progress.bar import Bar
 
 from src.api.db import DB
@@ -23,6 +23,7 @@ from src.api.metrics import (
     FileSizePerCommit,
     ProjectProductivityMetric,
     ProjectSizeMetric,
+    ProjectSizePerCommit,
 )
 from src.api.pull_requests import GitHubPullRequests
 from src.api.size import SCC
@@ -33,7 +34,6 @@ from src.api.types import (
     Committers,
     DailyProjectProductivity,
     DailyProjectSize,
-    FileSize,
     IssueIDs,
     Issues,
     ProjectProductivity,
@@ -41,6 +41,8 @@ from src.api.types import (
     PullRequestIDs,
     PullRequests,
     Releases,
+    T_FileSizePerCommit,
+    T_ProjectSizePerCommit,
 )
 from src.api.utils import (
     copy_dataframe_columns_to_dataframe,
@@ -169,10 +171,25 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
     )
     fspc.compute()
 
-    # Compute size of project per commit
+    # Compute size of the project per commit
+    pspc: ProjectSizePerCommit = ProjectSizePerCommit(
+        file_sizes=fspc.computed_data.copy(),
+    )
+    pspc.compute()
 
-    # Write size per commit to database
-    db.write_df(df=fspc.computed_data, table="file_size_per_commit", model=FileSize)
+    # Compute size of the project per day
+
+    # Write metrics to the database
+    db.write_df(
+        df=fspc.computed_data,
+        table="file_size_per_commit",
+        model=T_FileSizePerCommit,
+    )
+    db.write_df(
+        df=pspc.computed_data,
+        table="project_size_per_commit",
+        model=T_ProjectSizePerCommit,
+    )
 
 
 def handle_issues(namespace: dict[str, Any], db: DB) -> None:

@@ -137,12 +137,21 @@ class CommitLog(BaseModel):
     gpgsign: str = Field(default=..., description="GPG signature")
 
 
-class FileSize(BaseModel):
+class T_FileSizePerCommit(BaseModel):
     language: str = Field(
         default=..., description="Identified programming language of the file"
     )
     provider: str = Field(default=..., description="Absolute filepath")
     lines: int = Field(default=..., description="Number of lines in the file")
+    code: int = Field(default=..., description="Number of lines of code")
+    comments: int = Field(default=..., description="Number of lines of comments")
+    blanks: int = Field(default=..., description="Number of blank lines")
+    bytes: int = Field(default=..., description="Number of bytes")
+    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
+
+
+class T_ProjectSizePerCommit(BaseModel):
+    lines: int = Field(default=..., description="Number of lines in the project")
     code: int = Field(default=..., description="Number of lines of code")
     comments: int = Field(default=..., description="Number of lines of comments")
     blanks: int = Field(default=..., description="Number of blank lines")

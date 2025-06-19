@@ -65,6 +65,30 @@ class FileSizePerCommit(Metric):
         self.computed_data.columns = self.computed_data.columns.str.lower()
 
 
+class ProjectSizePerCommit(Metric):
+    def __init__(self, file_sizes: DataFrame) -> None:
+        super().__init__(input_data=file_sizes)
+
+    def compute(self) -> None:
+        # Group files by commit hash
+        commit_groups: DataFrameGroupBy = self.input_data.groupby(
+            by="commit_hash_id",
+        )
+
+        # Sum each column and convert floats to integers
+        self.computed_data = commit_groups.sum(numeric_only=True)
+        self.computed_data = self.computed_data.apply(
+            pd.to_numeric,
+            downcast="integer",
+        )
+
+        # Reestablish the commit_hash_id column
+        self.computed_data["commit_hash_id"] = self.input_data["commit_hash_id"]
+
+        # Reset index
+        self.computed_data = self.computed_data.reset_index(drop=True)
+
+
 class ProjectSizeMetric:
     """
     A class to compute and store project size metrics aggregated by commit.

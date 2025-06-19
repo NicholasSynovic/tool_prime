@@ -198,7 +198,7 @@ class DB:
         )
 
         _: Table = Table(
-            "project_size",
+            "project_size_per_commit",
             self.metadata,
             Column("id", Integer, primary_key=True),
             Column("commit_hash_id", Integer),
