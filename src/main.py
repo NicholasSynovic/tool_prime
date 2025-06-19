@@ -174,7 +174,7 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
 
     # Compute size of the project per commit
     pspc: ProjectSizePerCommit = ProjectSizePerCommit(
-        file_sizes=fspc.computed_data.copy(),
+        file_sizes=fspc.computed_data,
     )
     pspc.compute()
 
