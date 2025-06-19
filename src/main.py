@@ -18,11 +18,9 @@ from src.api.db import DB
 from src.api.issues import GitHubIssues
 from src.api.metrics import (
     BusFactorMetric,
-    DailyProjectProductivityMetric,
-    DailyProjectSizeMetric,
     FileSizePerCommit,
-    ProjectProductivityMetric,
-    ProjectSizeMetric,
+    ProjectProductivityPerCommit,
+    ProjectProductivityPerDay,
     ProjectSizePerCommit,
     ProjectSizePerDay,
 )
@@ -33,15 +31,14 @@ from src.api.types import (
     CommitHashes,
     CommitLog,
     Committers,
-    DailyProjectProductivity,
     IssueIDs,
     Issues,
-    ProjectProductivity,
-    ProjectSize,
     PullRequestIDs,
     PullRequests,
     Releases,
     T_FileSizePerCommit,
+    T_ProjectProductivityPerCommit,
+    T_ProjectProductivityPerDay,
     T_ProjectSizePerCommit,
     T_ProjectSizePerDay,
 )
@@ -338,56 +335,52 @@ def handle_pull_requests(namespace: dict[str, Any], db: DB) -> None:
 
 
 def handle_project_productivity(db: DB) -> None:
-    """
-    Handle the computation and storage of project productivity metrics.
-
-    This function reads the 'size' table from the database, computes the project
-    productivity metrics, and writes the results back to the
-    'project_productivity' table in the database.
-
-    The function performs the following steps:
-    1. Reads the 'size' table from the database using the specified model
-        `Size`.
-    2. Initializes a `ProjectProductivityMetric` object with the data from the
-        'size' table.
-    3. Computes the project productivity metrics using the `compute` method of
-        `ProjectProductivityMetric`.
-    4. Writes the computed metrics to the 'project_productivity' table in the
-        database using the specified model `ProjectProductivity`.
-
-    Args:
-        db (DB): The database connection object used to read from and write to
-            the database.
-
-    """
-    # Compute productivity per commit
-    size_table: DataFrame = db.read_table(table="size", model=Size)
-    project_productivity: ProjectProductivityMetric = ProjectProductivityMetric(
-        size_table=size_table,
-    )
-    project_productivity.compute()
-
-    # Compute daily productivity
-    daily_size_table: DataFrame = db.read_table(
-        table="daily_project_size",
-        model=DailyProjectSize,
+    # Get project size per commit
+    project_size_per_commit: DataFrame = db.read_table(
+        table="project_size_per_commit",
+        model=T_ProjectSizePerCommit,
     )
 
-    daily_project_productivity: DailyProjectProductivityMetric = (
-        DailyProjectProductivityMetric(daily_project_size_table=daily_size_table)
+    # Compute project productivity per commit
+    pppc: ProjectProductivityPerCommit = ProjectProductivityPerCommit(
+        project_size_per_commit=project_size_per_commit
     )
-    daily_project_productivity.compute()
+    pppc.compute()
+
+    # Project productivity per day requires datetimes of commits
+    sql: str = "SELECT id, commit_hash_id, committed_datetime FROM commit_logs"
+    commit_datetimes: DataFrame = db.query_database(sql=sql)
+    commit_datetimes["committed_datetime"] = commit_datetimes[
+        "committed_datetime"
+    ].apply(lambda x: Timestamp(ts_input=x))
+
+    # Join commit datetimes with project size per commit
+    pppd_input_data: DataFrame = pppc.computed_data.copy()
+    pppd_input_data = pppd_input_data.merge(
+        commit_datetimes[["commit_hash_id", "committed_datetime"]],
+        on="commit_hash_id",
+        how="left",
+    )
+
+    # Compute project productivity per day
+    pppd: ProjectProductivityPerDay = ProjectProductivityPerDay(
+        input_data=pppd_input_data,
+    )
+    pppd.compute()
 
     db.write_df(
-        df=project_productivity.data,
-        table="project_productivity",
-        model=ProjectProductivity,
+        df=pppc.computed_data,
+        table="project_productivity_per_commit",
+        model=T_ProjectProductivityPerCommit,
     )
 
+    print(pppd.computed_data)
+    input()
+
     db.write_df(
-        df=daily_project_productivity.data,
-        table="daily_project_productivity",
-        model=DailyProjectProductivity,
+        df=pppd.computed_data,
+        table="project_productivity_per_day",
+        model=T_ProjectProductivityPerDay,
     )
 
 

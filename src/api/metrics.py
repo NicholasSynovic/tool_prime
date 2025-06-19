@@ -65,6 +65,38 @@ class FileSizePerCommit(Metric):
         self.computed_data.columns = self.computed_data.columns.str.lower()
 
 
+class ProjectProductivityPerCommit(Metric):
+    def __init__(self, project_size_per_commit: DataFrame) -> None:
+        super().__init__(input_data=project_size_per_commit)
+
+    def compute(self) -> None:
+        self.computed_data = self.input_data.diff().fillna(0)
+        self.computed_data = self.computed_data.drop(columns="commit_hash_id")
+        self.computed_data = self.computed_data.add_prefix(prefix="delta_")
+
+        self.computed_data["commit_hash_id"] = self.input_data["commit_hash_id"]
+
+
+class ProjectProductivityPerDay(Metric):
+    def __init__(self, input_data: DataFrame) -> None:
+        super().__init__(input_data=input_data)
+
+    def compute(self) -> None:
+        data_grouped_by_days: DataFrameGroupBy = self.input_data.groupby(
+            by=Grouper(
+                key="committed_datetime",
+                freq="D",
+            ),
+        )
+
+        self.computed_data = data_grouped_by_days.sum()
+
+        self.computed_data["date"] = self.computed_data.index
+
+        self.computed_data = self.computed_data.drop(columns="commit_hash_id")
+        self.computed_data = self.computed_data.reset_index(drop=True)
+
+
 class ProjectSizePerDay(Metric):
     def __init__(self, input_data: DataFrame) -> None:
         super().__init__(input_data=input_data)
@@ -106,122 +138,6 @@ class ProjectSizePerCommit(Metric):
 
         # Reset index
         self.computed_data = self.computed_data.reset_index(drop=True)
-
-
-class ProjectProductivityMetric:
-    """
-    Class to compute productivity metrics for a project based on size data.
-
-    This class processes a DataFrame containing project size data and calculates
-    productivity metrics by analyzing changes in size metrics across different
-    commits. The results are stored in the `data` attribute as a DataFrame.
-
-    Attributes:
-        size_table (DataFrame): The input DataFrame containing size data for
-            each commit.
-        data (DataFrame): The output DataFrame containing computed productivity
-            metrics.
-
-    """
-
-    def __init__(self, size_table: DataFrame) -> None:
-        """
-        Initialize the ProjectProductivityMetric with the provided size data.
-
-        Args:
-            size_table (DataFrame): A DataFrame containing size metrics for each
-                commit.
-
-        """
-        self.size_table: DataFrame = size_table
-        self.data: DataFrame = DataFrame()
-
-    def compute(self) -> None:
-        """
-        Compute the productivity metrics based on the size data.
-
-        This method groups the size data by commit hash, calculates the sum of
-        numeric columns for each group, and computes the differences between
-        consecutive commits to determine the changes in size metrics. The
-        results are stored in the `data` attribute as a DataFrame with integer
-        downcasting applied.
-
-        The resulting DataFrame includes:
-        - Prefixed columns with "delta_" indicating changes in size metrics.
-        - A "commit_hash_id" column representing the commit identifiers.
-
-        """
-        commit_groups: DataFrameGroupBy = self.size_table.groupby(
-            by="commit_hash_id",
-        )
-
-        size: DataFrame = commit_groups.sum(numeric_only=True)
-        size = size.reset_index(drop=True)
-        print(size)
-        input()
-
-        size = size.add_prefix(prefix="delta_")
-        size["commit_hash_id"] = self.size_table.index
-
-        delta_size: DataFrame = size.diff().fillna(value=0)
-
-        self.data = delta_size.apply(
-            pd.to_numeric,
-            downcast="integer",
-        )
-
-
-class DailyProjectProductivityMetric:
-    """
-    A class to compute and store daily project productivity metrics.
-
-    This class processes a DataFrame containing daily project size data and
-    calculates the changes in size metrics from one day to the next. The results
-    are stored in the `data` attribute as a DataFrame.
-
-    Attributes:
-        daily_project_size_table (DataFrame): The input DataFrame containing
-            daily project size data.
-        data (DataFrame): The output DataFrame containing computed daily
-            productivity metrics.
-
-    """
-
-    def __init__(self, daily_project_size_table: DataFrame) -> None:
-        """
-        Initialize the DailyProjectProductivityMetric.
-
-        Args:
-            daily_project_size_table (DataFrame): A DataFrame containing daily
-                project size metrics.
-
-        """
-        self.daily_project_size_table: DataFrame = daily_project_size_table
-        self.data: DataFrame = DataFrame()
-
-    def compute(self) -> None:
-        """
-        Compute the daily project productivity metrics based on the size data.
-
-        This method prefixes the columns of the input DataFrame with "delta_",
-        calculates the differences between consecutive days to determine the
-        changes in size metrics, and stores the results in the `data` attribute
-        as a DataFrame.
-
-        The resulting DataFrame includes:
-        - Prefixed columns with "delta_" indicating changes in size metrics.
-        - A "date" column representing the date of each entry.
-
-        """
-        size: DataFrame = self.daily_project_size_table.add_prefix(
-            prefix="delta_",
-        )
-
-        delta_size: DataFrame = size.diff().fillna(0)
-        delta_size = delta_size.drop(columns=["delta_date"])
-        delta_size["date"] = self.daily_project_size_table["date"]
-
-        self.data = delta_size
 
 
 class BusFactorMetric:

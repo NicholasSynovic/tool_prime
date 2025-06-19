@@ -24,6 +24,36 @@ class T_FileSizePerCommit(BaseModel):
     commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
 
 
+class T_ProjectProductivityPerCommit(BaseModel):
+    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
+    delta_lines: int = Field(default=..., description="Change in total number of lines")
+    delta_code: int = Field(
+        default=..., description="Change in total number of code lines"
+    )
+    delta_comments: int = Field(
+        default=..., description="Change in total number of comment lines"
+    )
+    delta_blanks: int = Field(
+        default=..., description="Change in total number of blank lines"
+    )
+    delta_bytes: int = Field(default=..., description="Change in total number of bytes")
+
+
+class T_ProjectProductivityPerDay(BaseModel):
+    date: datetime = Field(default=..., description="Date of measurement")
+    delta_lines: int = Field(default=..., description="Change in total number of lines")
+    delta_code: int = Field(
+        default=..., description="Change in total number of code lines"
+    )
+    delta_comments: int = Field(
+        default=..., description="Change in total number of comment lines"
+    )
+    delta_blanks: int = Field(
+        default=..., description="Change in total number of blank lines"
+    )
+    delta_bytes: int = Field(default=..., description="Change in total number of bytes")
+
+
 class T_ProjectSizePerDay(BaseModel):
     date: datetime = Field(default=..., description="Date of measurement")
     lines: int = Field(default=..., description="Total number of lines")
@@ -239,113 +269,6 @@ class PullRequests(BaseModel):
     closed_at: datetime = Field(
         default=..., description="Datetime when an pull request was closed"
     )
-
-
-class ProjectSize(BaseModel):
-    """
-    A Pydantic model representing the size metrics of a project at a commit.
-
-    Each attribute is initialized with a default value, which must be provided
-    when creating an instance of the model.
-
-    Attributes:
-        commit_hash_id (int): The unique identifier for the commit hash from the
-            database.
-        lines (int): The total number of lines in the project, including code,
-            comments, and blanks.
-        code (int): The total number of lines that contain code.
-        comments (int): The total number of lines that contain comments.
-        blanks (int): The total number of blank lines.
-        bytes (int): The total number of bytes used by the project files.
-
-    """
-
-    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
-    lines: int = Field(default=..., description="Total number of lines")
-    code: int = Field(default=..., description="Total number of code lines")
-    comments: int = Field(default=..., description="Total number of comment lines")
-    blanks: int = Field(default=..., description="Total number of blank lines")
-    bytes: int = Field(default=..., description="Total number of bytes")
-
-
-class ProjectProductivity(BaseModel):
-    """
-    A Pydantic model representing the productivity metrics of a project.
-
-    Each attribute is initialized with a default value, which must be provided
-    when creating an instance of the model. This model is useful for tracking
-    the differences in project size metrics between consecutive commits.
-
-    Attributes:
-        commit_hash_id (int): The unique identifier for the commit hash from the
-            database.
-        delta_lines (int): The change in the total number of lines in the
-            project, including code, comments, and blanks.
-        delta_code (int): The change in the total number of lines that contain
-            code.
-        delta_comments (int): The change in the total number of lines that
-            contain comments.
-        delta_blanks (int): The change in the total number of blank lines.
-        delta_bytes (int): The change in the total number of bytes used by the
-            project files.
-
-    """
-
-    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
-    delta_lines: int = Field(default=..., description="Change in total number of lines")
-    delta_code: int = Field(
-        default=..., description="Change in total number of code lines"
-    )
-    delta_comments: int = Field(
-        default=..., description="Change in total number of comment lines"
-    )
-    delta_blanks: int = Field(
-        default=..., description="Change in total number of blank lines"
-    )
-    delta_bytes: int = Field(default=..., description="Change in total number of bytes")
-
-
-class DailyProjectProductivity(BaseModel):
-    """
-    A data model representing daily changes in project productivity metrics.
-
-    This class is used to encapsulate the changes in various size metrics of a
-    project on a specific date. It includes fields for the changes in the total
-    number of lines, code lines, comment lines, blank lines, and bytes. The
-    model is designed to be used with data validation libraries like Pydantic,
-    providing type safety and automatic validation.
-
-    Each attribute is required and is accompanied by a description that provides
-    additional context for its purpose and usage.
-
-    Attributes:
-        date (datetime): The date on which the productivity changes were
-            measured.
-        delta_lines (int): The change in the total number of lines compared to
-            the previous measurement.
-        delta_code (int): The change in the total number of code lines compared
-            to the previous measurement.
-        delta_comments (int): The change in the total number of comment lines
-            compared to the previous measurement.
-        delta_blanks (int): The change in the total number of blank lines
-            compared to the previous measurement.
-        delta_bytes (int): The change in the total number of bytes compared to
-            the previous measurement.
-
-    """
-
-    date: datetime = Field(default=..., description="Date of measurement")
-    delta_lines: int = Field(default=..., description="Change in total number of lines")
-    delta_code: int = Field(
-        default=..., description="Change in total number of code lines"
-    )
-    delta_comments: int = Field(
-        default=..., description="Change in total number of comment lines"
-    )
-    delta_blanks: int = Field(
-        default=..., description="Change in total number of blank lines"
-    )
-    delta_bytes: int = Field(default=..., description="Change in total number of bytes")
 
 
 def validate_df(model: type[BaseModel], df: DataFrame) -> None:
