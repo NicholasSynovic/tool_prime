@@ -17,6 +17,7 @@ from progress.bar import Bar
 from src.api.db import DB
 from src.api.issues import GitHubIssues
 from src.api.metrics import (
+    DailyProjectProductivityMetric,
     DailyProjectSizeMetric,
     ProjectProductivityMetric,
     ProjectSizeMetric,
@@ -28,6 +29,7 @@ from src.api.types import (
     CommitHashes,
     CommitLog,
     Committers,
+    DailyProjectProductivity,
     DailyProjectSize,
     IssueIDs,
     Issues,
@@ -394,15 +396,34 @@ def handle_project_productivity(db: DB) -> None:
             the database.
 
     """
+    # Compute productivity per commit
     size_table: DataFrame = db.read_table(table="size", model=Size)
     project_productivity: ProjectProductivityMetric = ProjectProductivityMetric(
-        size_table=size_table
+        size_table=size_table,
     )
     project_productivity.compute()
+
+    # Compute daily productivity
+    daily_size_table: DataFrame = db.read_table(
+        table="daily_project_size",
+        model=DailyProjectSize,
+    )
+
+    daily_project_productivity: DailyProjectProductivityMetric = (
+        DailyProjectProductivityMetric(daily_project_size_table=daily_size_table)
+    )
+    daily_project_productivity.compute()
+
     db.write_df(
         df=project_productivity.data,
         table="project_productivity",
         model=ProjectProductivity,
+    )
+
+    db.write_df(
+        df=daily_project_productivity.data,
+        table="daily_project_productivity",
+        model=DailyProjectProductivity,
     )
 
 

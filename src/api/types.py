@@ -332,6 +332,49 @@ class ProjectProductivity(BaseModel):
     delta_bytes: int = Field(default=..., description="Change in total number of bytes")
 
 
+class DailyProjectProductivity(BaseModel):
+    """
+    A data model representing daily changes in project productivity metrics.
+
+    This class is used to encapsulate the changes in various size metrics of a
+    project on a specific date. It includes fields for the changes in the total
+    number of lines, code lines, comment lines, blank lines, and bytes. The
+    model is designed to be used with data validation libraries like Pydantic,
+    providing type safety and automatic validation.
+
+    Each attribute is required and is accompanied by a description that provides
+    additional context for its purpose and usage.
+
+    Attributes:
+        date (datetime): The date on which the productivity changes were
+            measured.
+        delta_lines (int): The change in the total number of lines compared to
+            the previous measurement.
+        delta_code (int): The change in the total number of code lines compared
+            to the previous measurement.
+        delta_comments (int): The change in the total number of comment lines
+            compared to the previous measurement.
+        delta_blanks (int): The change in the total number of blank lines
+            compared to the previous measurement.
+        delta_bytes (int): The change in the total number of bytes compared to
+            the previous measurement.
+
+    """
+
+    date: datetime = Field(default=..., description="Date of measurement")
+    delta_lines: int = Field(default=..., description="Change in total number of lines")
+    delta_code: int = Field(
+        default=..., description="Change in total number of code lines"
+    )
+    delta_comments: int = Field(
+        default=..., description="Change in total number of comment lines"
+    )
+    delta_blanks: int = Field(
+        default=..., description="Change in total number of blank lines"
+    )
+    delta_bytes: int = Field(default=..., description="Change in total number of bytes")
+
+
 def validate_df(model: type[BaseModel], df: DataFrame) -> None:
     """
     Validate each row in a DataFrame against a Pydantic model.

@@ -172,3 +172,56 @@ class ProjectProductivityMetric:
             pd.to_numeric,
             downcast="integer",
         )
+
+
+class DailyProjectProductivityMetric:
+    """
+    A class to compute and store daily project productivity metrics.
+
+    This class processes a DataFrame containing daily project size data and
+    calculates the changes in size metrics from one day to the next. The results
+    are stored in the `data` attribute as a DataFrame.
+
+    Attributes:
+        daily_project_size_table (DataFrame): The input DataFrame containing
+            daily project size data.
+        data (DataFrame): The output DataFrame containing computed daily
+            productivity metrics.
+
+    """
+
+    def __init__(self, daily_project_size_table: DataFrame) -> None:
+        """
+        Initialize the DailyProjectProductivityMetric.
+
+        Args:
+            daily_project_size_table (DataFrame): A DataFrame containing daily
+                project size metrics.
+
+        """
+        self.daily_project_size_table: DataFrame = daily_project_size_table
+        self.data: DataFrame = DataFrame()
+
+    def compute(self) -> None:
+        """
+        Compute the daily project productivity metrics based on the size data.
+
+        This method prefixes the columns of the input DataFrame with "delta_",
+        calculates the differences between consecutive days to determine the
+        changes in size metrics, and stores the results in the `data` attribute
+        as a DataFrame.
+
+        The resulting DataFrame includes:
+        - Prefixed columns with "delta_" indicating changes in size metrics.
+        - A "date" column representing the date of each entry.
+
+        """
+        size: DataFrame = self.daily_project_size_table.add_prefix(
+            prefix="delta_",
+        )
+
+        delta_size: DataFrame = size.diff().fillna(0)
+        delta_size = delta_size.drop(columns=["delta_date"])
+        delta_size["date"] = self.daily_project_size_table["date"]
+
+        self.data = delta_size
