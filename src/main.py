@@ -17,8 +17,10 @@ from progress.bar import Bar
 from src.api.db import DB
 from src.api.issues import GitHubIssues
 from src.api.metrics import (
+    BusFactorMetric,
     DailyProjectProductivityMetric,
     DailyProjectSizeMetric,
+    FileSizePerCommit,
     ProjectProductivityMetric,
     ProjectSizeMetric,
 )
@@ -31,6 +33,7 @@ from src.api.types import (
     Committers,
     DailyProjectProductivity,
     DailyProjectSize,
+    FileSize,
     IssueIDs,
     Issues,
     ProjectProductivity,
@@ -38,7 +41,6 @@ from src.api.types import (
     PullRequestIDs,
     PullRequests,
     Releases,
-    Size,
 )
 from src.api.utils import (
     copy_dataframe_columns_to_dataframe,
@@ -97,6 +99,8 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:  # no
             return DB(db_path=namespace["project_size.output"])
         case "project_productivity":
             return DB(db_path=namespace["project_productivity.output"])
+        case "bus_factor":
+            return DB(db_path=namespace["bus_factor.output"])
         case _:
             return None
 
@@ -140,52 +144,35 @@ def handle_vcs(namespace: dict[str, Any], db: DB) -> None:
 
 
 def handle_size(namespace: dict[str, Any], db: DB) -> None:
-    """
-    Compute and store repository size measured in lines of code into a database.
-
-    This function calculates the size of a repository based on lines of code
-    and stores the result in the database.
-
-    Args:
-      namespace: A dictionary containing command-line arguments.
-      db: A DB object representing the database connection.
-
-    """
-    data: list[DataFrame] = []
-
+    # Get repository path
     repo_path: Path = Path(namespace["size.input"]).resolve()
-    vcs: VersionControlSystem = identify_vcs(repo_path=repo_path)
-    if vcs == -1:
+
+    # Instantiate VCS class
+    vcs: VersionControlSystem | int = identify_vcs(repo_path=repo_path)
+    if isinstance(vcs, int):
         sys.exit(2)
 
+    # Instantiate SCC class
     scc: SCC = SCC(directory=vcs.repo_path)
 
-    commits_df: DataFrame = db.read_table(
+    # Get commit hashes from the database to parse through
+    commit_hashes: DataFrame = db.read_table(
         table="commit_hashes",
         model=CommitHashes,
     )
 
-    idx: int
-    row: Series
-    with Bar("Computing size per commit...", max=commits_df.shape[0]) as bar:
-        for idx, row in commits_df.iterrows():
-            commit_hash: str = row["commit_hash"]
+    # Compute size of each file per commit
+    fspc: FileSizePerCommit = FileSizePerCommit(
+        vcs=vcs,
+        scc=scc,
+        commit_hashes=commit_hashes,
+    )
+    fspc.compute()
 
-            vcs.checkout_revision(revision_hash=commit_hash)
+    # Compute size of project per commit
 
-            scc_data: DataFrame = scc.run()
-            scc_data["commit_hash_id"] = idx
-            scc_data = scc_data.drop(columns=["Filename", "Complexity", "ULOC"])
-
-            data.append(scc_data)
-            bar.next()
-
-    vcs.checkout_most_recent_revision()
-
-    size_data: DataFrame = pd.concat(objs=data, ignore_index=True)
-    size_data.columns = size_data.columns.str.lower()
-
-    db.write_df(df=size_data, table="size", model=Size)
+    # Write size per commit to database
+    db.write_df(df=fspc.computed_data, table="file_size_per_commit", model=FileSize)
 
 
 def handle_issues(namespace: dict[str, Any], db: DB) -> None:
@@ -427,6 +414,29 @@ def handle_project_productivity(db: DB) -> None:
     )
 
 
+def handle_bus_factor(db: DB) -> None:
+    # SQL query to get input daily project size
+    sql_query: str = """
+    SELECT
+        pp.*,
+        c.committed_datetime, c.committer_id
+    FROM
+        commit_logs c
+    JOIN
+        project_productivity pp ON c.commit_hash_id = pp.commit_hash_id;
+    """
+
+    input_data: DataFrame = db.query_database(sql=sql_query)
+
+    input_data["committed_datetime"] = input_data["committed_datetime"].apply(
+        lambda x: Timestamp(ts_input=x)
+    )
+    input_data = input_data.drop(columns="commit_hash_id")
+
+    bus_factor: BusFactorMetric = BusFactorMetric(input_data=input_data)
+    bus_factor.compute()
+
+
 def main() -> None:
     """
     Execute the application based on command-line arguments.
@@ -462,6 +472,8 @@ def main() -> None:
             handle_project_size(db=db)
         case "project_productivity":
             handle_project_productivity(db=db)
+        case "bus_factor":
+            handle_bus_factor(db=db)
         case _:
             sys.exit(3)
 

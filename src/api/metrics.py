@@ -5,9 +5,64 @@ Copyright (C) 2025 Nicholas M. Synovic.
 
 """
 
+from abc import ABC, abstractmethod
+from collections.abc import Iterator
+
 import pandas as pd
-from pandas import DataFrame, Grouper
+from pandas import DataFrame, Grouper, Series, Timestamp
 from pandas.core.groupby import DataFrameGroupBy
+from progress.bar import Bar
+from pydantic import BaseModel
+
+from src.api.size import SCC
+from src.api.vcs import VersionControlSystem
+
+
+class Metric(ABC):
+    def __init__(self, input_data: DataFrame) -> None:
+        self.input_data: DataFrame = input_data
+        self.computed_data: DataFrame = DataFrame()
+
+    @abstractmethod
+    def compute(self) -> None: ...
+
+
+class FileSizePerCommit(Metric):
+    def __init__(
+        self,
+        vcs: VersionControlSystem,
+        scc: SCC,
+        commit_hashes: DataFrame,
+    ) -> None:
+        self.scc: SCC = scc
+        self.vcs: VersionControlSystem = vcs
+        super().__init__(input_data=commit_hashes)
+
+    def compute(self) -> None:
+        data: list[DataFrame] = []
+
+        number_of_commits: int = self.input_data.shape[0]
+        rows: Iterator[tuple[int, Series]] = self.input_data.iterrows()
+
+        idx: int
+        row: Series
+        with Bar("Computing size per commit...", max=number_of_commits) as bar:
+            for idx, row in rows:
+                commit_hash: str = row["commit_hash"]
+
+                self.vcs.checkout_revision(revision_hash=commit_hash)
+
+                scc_data: DataFrame = self.scc.run()
+                scc_data["commit_hash_id"] = idx
+                scc_data = scc_data.drop(columns=["Filename", "Complexity", "ULOC"])
+
+                data.append(scc_data)
+                bar.next()
+
+        self.vcs.checkout_most_recent_revision()
+
+        self.computed_data = pd.concat(objs=data, ignore_index=True)
+        self.computed_data.columns = self.computed_data.columns.str.lower()
 
 
 class ProjectSizeMetric:
@@ -161,10 +216,13 @@ class ProjectProductivityMetric:
             by="commit_hash_id",
         )
 
-        size: DataFrame = commit_groups.sum(numeric_only=True).add_prefix(
-            prefix="delta_"
-        )
-        size["commit_hash_id"] = size.index
+        size: DataFrame = commit_groups.sum(numeric_only=True)
+        size = size.reset_index(drop=True)
+        print(size)
+        input()
+
+        size = size.add_prefix(prefix="delta_")
+        size["commit_hash_id"] = self.size_table.index
 
         delta_size: DataFrame = size.diff().fillna(value=0)
 
@@ -225,3 +283,22 @@ class DailyProjectProductivityMetric:
         delta_size["date"] = self.daily_project_size_table["date"]
 
         self.data = delta_size
+
+
+class BusFactorMetric:
+    def __init__(self, input_data: DataFrame) -> None:
+        self.input_data: DataFrame = input_data
+        self.data: DataFrame = DataFrame()
+
+    def compute(self) -> None:
+        data: list[dict[str, Timestamp | int | float]] = []
+
+        grouped_data_by_day: DataFrameGroupBy = self.input_data.groupby(
+            by=Grouper(key="committed_datetime", freq="D")
+        )
+
+        idx: Timestamp
+        df: DataFrame
+        for idx, df in grouped_data_by_day:
+            print("\n", idx, df)
+            input()

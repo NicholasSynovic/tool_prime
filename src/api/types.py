@@ -137,27 +137,10 @@ class CommitLog(BaseModel):
     gpgsign: str = Field(default=..., description="GPG signature")
 
 
-class Size(BaseModel):
-    """
-    Model representing source code size metrics for a single file.
-
-    This model captures detailed statistics about a source file, including language
-    identification, line counts, and byte size. It is intended for use in analyzing
-    and storing software metrics related to code evolution in version control systems.
-
-    Attributes:
-        language (str): Identified programming language of the file.
-        filename (str): Name of the file (excluding path information).
-        lines (int): Total number of lines in the file.
-        code (int): Number of lines that contain code (excluding comments and blanks).
-        comments (int): Number of lines that are comments.
-        blanks (int): Number of blank (empty or whitespace-only) lines.
-        bytes (int): Size of the file in bytes.
-        commit_hash_id (int): Foreign key reference to the commit hash in the database.
-
-    """
-
-    language: str = Field(default=..., description="Identified programming language")
+class FileSize(BaseModel):
+    language: str = Field(
+        default=..., description="Identified programming language of the file"
+    )
     provider: str = Field(default=..., description="Absolute filepath")
     lines: int = Field(default=..., description="Number of lines in the file")
     code: int = Field(default=..., description="Number of lines of code")

@@ -75,6 +75,9 @@ class CLI:
         # pp Subparser
         self.project_productivity_parser = self.project_productivity_subparser()
 
+        # bf Subparser
+        self.bus_factor_parser = self.bus_factor_subparser()
+
     def vcs_subparser(self) -> ArgumentParser:
         """
         Define a subparser for parsing a project's version control system.
@@ -320,6 +323,38 @@ class CLI:
         )
 
         return project_productivity_parser
+
+    def bus_factor_subparser(self) -> ArgumentParser:
+        """
+        Define and return the argument subparser for the 'bf' command.
+
+        This subparser handles command-line arguments related to computing the
+        bus factor of a project. Bus factor is a measurement of an individuals
+        contributions to a a project and is not reflective of the content that
+        they contribute.
+
+        Returns:
+            ArgumentParser: Configured subparser for the 'bf' command.
+
+        """
+        bus_factor_parser: ArgumentParser = self.subparsers.add_parser(
+            name="bf",
+            help="Compute bus factor",
+            description="The seventh stage of the metrics pipeline",
+            prog=f"{src.PROG} bf",
+            epilog=src.EPILOG,
+        )
+
+        bus_factor_parser.add_argument(
+            "-o",
+            "--output",
+            required=True,
+            help="Path to SQLite3 database",
+            type=Path,
+            dest="bus_factor.output",
+        )
+
+        return bus_factor_parser
 
     def parse_args(self) -> Namespace:
         """
