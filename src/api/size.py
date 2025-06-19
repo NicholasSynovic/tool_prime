@@ -5,13 +5,14 @@ Copyright (C) 2025 Nicholas M. Synovic.
 
 """
 
-from pandas import DataFrame
-import pandas as pd
-import subprocess  # nosec
-from subprocess import CompletedProcess  # nosec
-from pathlib import Path
-from io import StringIO
 import shlex
+import subprocess  # nosec
+from io import StringIO
+from pathlib import Path
+from subprocess import CompletedProcess  # nosec
+
+import pandas as pd
+from pandas import DataFrame
 
 
 class SCC:

@@ -6,16 +6,15 @@ Copyright (C) 2025 Nicholas M. Synovic.
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
-from collections.abc import Iterator
+from typing import Any, NamedTuple
 
 from git import Commit, Repo, TagReference
 from git.exc import InvalidGitRepositoryError
 from pandas import DataFrame
 from progress.bar import Bar
-from typing import NamedTuple
 
 from src.api.utils import (
     copy_dataframe_cols_and_remove_duplicate_rows_by_col,

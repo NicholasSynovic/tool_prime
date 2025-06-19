@@ -5,13 +5,12 @@ Copyright (C) 2025 Nicholas M. Synovic.
 
 """
 
-from requests import Response, post
-
 from json import dumps
 from typing import Any
 
 from pandas import DataFrame, Series
 from progress.bar import Bar
+from requests import Response, post
 
 
 def copy_dataframe_columns_to_dataframe(

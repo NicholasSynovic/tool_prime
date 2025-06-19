@@ -5,14 +5,16 @@ Copyright (C) 2025 Nicholas M. Synovic.
 
 """
 
-from pandas import DataFrame
-from string import Template
 from functools import partial
 from operator import itemgetter
-from src.api import VALID_RESPONSE_CODE
+from string import Template
+
 import pandas as pd
-from src.api.utils import query_graphql
+from pandas import DataFrame
 from requests import Response
+
+from src.api import VALID_RESPONSE_CODE
+from src.api.utils import query_graphql
 
 
 class GitHubPullRequests:

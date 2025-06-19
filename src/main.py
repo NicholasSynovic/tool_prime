@@ -6,45 +6,44 @@ Copyright (C) 2025 Nicholas M. Synovic.
 """
 
 import sys
+from math import ceil
 from pathlib import Path
 from typing import Any
-from progress.bar import Bar
-from src.api.size import SCC
-from pandas import Series
+
 import pandas as pd
-from src.api.pull_requests import GitHubPullRequests
-from src.api.metrics import (
-    ProjectSizeMetric,
-    ProjectProductivityMetric,
-    DailyProjectSizeMetric,
-)
-from pandas import Timestamp
-from pandas import DataFrame
+from pandas import DataFrame, Series, Timestamp
+from progress.bar import Bar
 
 from src.api.db import DB
+from src.api.issues import GitHubIssues
+from src.api.metrics import (
+    DailyProjectSizeMetric,
+    ProjectProductivityMetric,
+    ProjectSizeMetric,
+)
+from src.api.pull_requests import GitHubPullRequests
+from src.api.size import SCC
 from src.api.types import (
     Authors,
     CommitHashes,
     CommitLog,
     Committers,
-    Releases,
-    Size,
-    Issues,
+    DailyProjectSize,
     IssueIDs,
+    Issues,
+    ProjectProductivity,
+    ProjectSize,
     PullRequestIDs,
     PullRequests,
-    ProjectSize,
-    ProjectProductivity,
-    DailyProjectSize,
+    Releases,
+    Size,
 )
-from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
-from src.cli import CLI
-from src.api.issues import GitHubIssues
-from math import ceil
 from src.api.utils import (
     copy_dataframe_columns_to_dataframe,
     replace_dataframe_value_column_with_index_reference,
 )
+from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
+from src.cli import CLI
 
 
 def get_first_namespace_key(namespace: dict[str, Any]) -> str:

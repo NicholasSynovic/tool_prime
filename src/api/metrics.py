@@ -5,9 +5,9 @@ Copyright (C) 2025 Nicholas M. Synovic.
 
 """
 
+import pandas as pd
 from pandas import DataFrame, Grouper
 from pandas.core.groupby import DataFrameGroupBy
-import pandas as pd
 
 
 class ProjectSizeMetric:
