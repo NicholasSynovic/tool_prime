@@ -24,6 +24,7 @@ from src.api.metrics import (
     ProjectProductivityMetric,
     ProjectSizeMetric,
     ProjectSizePerCommit,
+    ProjectSizePerDay,
 )
 from src.api.pull_requests import GitHubPullRequests
 from src.api.size import SCC
@@ -33,7 +34,6 @@ from src.api.types import (
     CommitLog,
     Committers,
     DailyProjectProductivity,
-    DailyProjectSize,
     IssueIDs,
     Issues,
     ProjectProductivity,
@@ -43,6 +43,7 @@ from src.api.types import (
     Releases,
     T_FileSizePerCommit,
     T_ProjectSizePerCommit,
+    T_ProjectSizePerDay,
 )
 from src.api.utils import (
     copy_dataframe_columns_to_dataframe,
@@ -177,7 +178,24 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
     )
     pspc.compute()
 
-    # Compute size of the project per day
+    # Project size per day requires datetimes of commits
+    sql: str = "SELECT id, commit_hash_id, committed_datetime FROM commit_logs"
+    commit_datetimes: DataFrame = db.query_database(sql=sql)
+    commit_datetimes["committed_datetime"] = commit_datetimes[
+        "committed_datetime"
+    ].apply(lambda x: Timestamp(ts_input=x))
+
+    # Join commit datetimes with project size per commit
+    pspd_input_data: DataFrame = pspc.computed_data.copy()
+    pspd_input_data = pspd_input_data.merge(
+        commit_datetimes[["commit_hash_id", "committed_datetime"]],
+        on="commit_hash_id",
+        how="left",
+    )
+
+    # Compute project size per day
+    pspd: ProjectSizePerDay = ProjectSizePerDay(input_data=pspd_input_data)
+    pspd.compute()
 
     # Write metrics to the database
     db.write_df(
@@ -189,6 +207,11 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
         df=pspc.computed_data,
         table="project_size_per_commit",
         model=T_ProjectSizePerCommit,
+    )
+    db.write_df(
+        df=pspd.computed_data,
+        table="project_size_per_day",
+        model=T_ProjectSizePerDay,
     )
 
 

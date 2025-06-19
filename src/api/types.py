@@ -11,6 +11,37 @@ from pandas import DataFrame, Series
 from pydantic import BaseModel, Field, ValidationError
 
 
+class T_FileSizePerCommit(BaseModel):
+    language: str = Field(
+        default=..., description="Identified programming language of the file"
+    )
+    provider: str = Field(default=..., description="Absolute filepath")
+    lines: int = Field(default=..., description="Number of lines in the file")
+    code: int = Field(default=..., description="Number of lines of code")
+    comments: int = Field(default=..., description="Number of lines of comments")
+    blanks: int = Field(default=..., description="Number of blank lines")
+    bytes: int = Field(default=..., description="Number of bytes")
+    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
+
+
+class T_ProjectSizePerDay(BaseModel):
+    date: datetime = Field(default=..., description="Date of measurement")
+    lines: int = Field(default=..., description="Total number of lines")
+    code: int = Field(default=..., description="Total number of code lines")
+    comments: int = Field(default=..., description="Total number of comment lines")
+    blanks: int = Field(default=..., description="Total number of blank lines")
+    bytes: int = Field(default=..., description="Total number of bytes")
+
+
+class T_ProjectSizePerCommit(BaseModel):
+    lines: int = Field(default=..., description="Number of lines in the project")
+    code: int = Field(default=..., description="Number of lines of code")
+    comments: int = Field(default=..., description="Number of lines of comments")
+    blanks: int = Field(default=..., description="Number of blank lines")
+    bytes: int = Field(default=..., description="Number of bytes")
+    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
+
+
 class CommitHashes(BaseModel):
     """
     Represents a commit hash of a specific commit.
@@ -137,28 +168,6 @@ class CommitLog(BaseModel):
     gpgsign: str = Field(default=..., description="GPG signature")
 
 
-class T_FileSizePerCommit(BaseModel):
-    language: str = Field(
-        default=..., description="Identified programming language of the file"
-    )
-    provider: str = Field(default=..., description="Absolute filepath")
-    lines: int = Field(default=..., description="Number of lines in the file")
-    code: int = Field(default=..., description="Number of lines of code")
-    comments: int = Field(default=..., description="Number of lines of comments")
-    blanks: int = Field(default=..., description="Number of blank lines")
-    bytes: int = Field(default=..., description="Number of bytes")
-    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
-
-
-class T_ProjectSizePerCommit(BaseModel):
-    lines: int = Field(default=..., description="Number of lines in the project")
-    code: int = Field(default=..., description="Number of lines of code")
-    comments: int = Field(default=..., description="Number of lines of comments")
-    blanks: int = Field(default=..., description="Number of blank lines")
-    bytes: int = Field(default=..., description="Number of bytes")
-    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
-
-
 class IssueIDs(BaseModel):
     """
     Pydantic model representing a GitHub issue ID.
@@ -252,34 +261,6 @@ class ProjectSize(BaseModel):
     """
 
     commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
-    lines: int = Field(default=..., description="Total number of lines")
-    code: int = Field(default=..., description="Total number of code lines")
-    comments: int = Field(default=..., description="Total number of comment lines")
-    blanks: int = Field(default=..., description="Total number of blank lines")
-    bytes: int = Field(default=..., description="Total number of bytes")
-
-
-class DailyProjectSize(BaseModel):
-    """
-    Data model representing the daily size metrics of a project.
-
-    This class is used to encapsulate various metrics related to the size of a
-    project on a specific date. It includes fields for the total number of lines,
-    code lines, comment lines, blank lines, and the total number of bytes. The
-    model is designed to be used with data validation libraries like Pydantic,
-    providing type safety and automatic validation.
-
-    Attributes:
-        date (datetime): The date on which the size measurement was taken.
-        lines (int): The total number of lines in the project on the given date.
-        code (int): The total number of lines that contain executable code.
-        comments (int): The total number of lines that are comments.
-        blanks (int): The total number of blank lines in the project.
-        bytes (int): The total number of bytes occupied by the project files.
-
-    """
-
-    date: datetime = Field(default=..., description="Date of measurement")
     lines: int = Field(default=..., description="Total number of lines")
     code: int = Field(default=..., description="Total number of code lines")
     comments: int = Field(default=..., description="Total number of comment lines")

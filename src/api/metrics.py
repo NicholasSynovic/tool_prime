@@ -65,6 +65,25 @@ class FileSizePerCommit(Metric):
         self.computed_data.columns = self.computed_data.columns.str.lower()
 
 
+class ProjectSizePerDay(Metric):
+    def __init__(self, input_data: DataFrame) -> None:
+        super().__init__(input_data=input_data)
+
+    def compute(self) -> None:
+        data_grouped_by_days: DataFrameGroupBy = self.input_data.groupby(
+            by=Grouper(
+                key="committed_datetime",
+                freq="D",
+            ),
+        )
+
+        self.computed_data = data_grouped_by_days.sum(numeric_only=True)
+        self.computed_data = self.computed_data.drop(columns="commit_hash_id")
+
+        self.computed_data["date"] = self.computed_data.index
+        self.computed_data = self.computed_data.reset_index(drop=True)
+
+
 class ProjectSizePerCommit(Metric):
     def __init__(self, file_sizes: DataFrame) -> None:
         super().__init__(input_data=file_sizes)
@@ -83,7 +102,7 @@ class ProjectSizePerCommit(Metric):
         )
 
         # Reestablish the commit_hash_id column
-        self.computed_data["commit_hash_id"] = self.input_data["commit_hash_id"]
+        self.computed_data["commit_hash_id"] = self.computed_data.index
 
         # Reset index
         self.computed_data = self.computed_data.reset_index(drop=True)

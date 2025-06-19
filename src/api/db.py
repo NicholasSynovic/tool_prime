@@ -214,7 +214,7 @@ class DB:
         )
 
         _: Table = Table(
-            "daily_project_size",
+            "project_size_per_day",
             self.metadata,
             Column("id", Integer, primary_key=True),
             Column("date", DateTime),
