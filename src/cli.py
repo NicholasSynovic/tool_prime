@@ -90,6 +90,7 @@ class CLI:
         vcs_parser: ArgumentParser = self.subparsers.add_parser(
             name="vcs",
             help="Parse a project's version control system for project metadata",
+            description="The first stage of the metrics pipeline",
             prog=f"{src.PROG} vcs",
             epilog=src.EPILOG,
         )
@@ -128,6 +129,7 @@ class CLI:
         size_parser: ArgumentParser = self.subparsers.add_parser(
             name="size",
             help="Measure the size of repository by lines of code",
+            description="The second stage of the metrics pipeline",
             prog=f"{src.PROG} size",
             epilog=src.EPILOG,
         )
@@ -166,6 +168,7 @@ class CLI:
         issue_parser: ArgumentParser = self.subparsers.add_parser(
             name="issues",
             help="Get issue metadata from a GitHub repository",
+            description="The third stage of the metrics pipeline",
             prog=f"{src.PROG} issues",
             epilog=src.EPILOG,
         )
@@ -218,6 +221,7 @@ class CLI:
         pull_requests_parser: ArgumentParser = self.subparsers.add_parser(
             name="pr",
             help="Get pull request metadata from a GitHub repository",
+            description="The fourth stage of the metrics pipeline",
             prog=f"{src.PROG} pr",
             epilog=src.EPILOG,
         )
@@ -255,10 +259,22 @@ class CLI:
 
         return pull_requests_parser
 
-    def project_size_subparser(self) -> None:
+    def project_size_subparser(self) -> ArgumentParser:
+        """
+        Define and return the argument subparser for the 'ps' command.
+
+        This subparser handles command-line arguments related to computing the
+        project size of a repository. Project size is measured in both bytes and
+        lines of code.
+
+        Returns:
+            ArgumentParser: Configured subparser for the 'ps' command.
+
+        """
         project_size_parser: ArgumentParser = self.subparsers.add_parser(
             name="ps",
             help="Compute project size in lines of code and bytes",
+            description="The fifth stage of the metrics pipeline",
             prog=f"{src.PROG} ps",
             epilog=src.EPILOG,
         )
@@ -272,10 +288,24 @@ class CLI:
             dest="project_size.output",
         )
 
-    def project_productivity_subparser(self) -> None:
+        return project_size_parser
+
+    def project_productivity_subparser(self) -> ArgumentParser:
+        """
+        Define and return the argument subparser for the 'pp' command.
+
+        This subparser handles command-line arguments related to computing the
+        productivity of a project. Project  productivity is a measurement of
+        activity in a project and is not reflective of the team's capabilities.
+
+        Returns:
+            ArgumentParser: Configured subparser for the 'pp' command.
+
+        """
         project_productivity_parser: ArgumentParser = self.subparsers.add_parser(
             name="pp",
             help="Compute project productivity",
+            description="The sixth stage of the metrics pipeline",
             prog=f"{src.PROG} pp",
             epilog=src.EPILOG,
         )
@@ -288,6 +318,8 @@ class CLI:
             type=Path,
             dest="project_productivity.output",
         )
+
+        return project_productivity_parser
 
     def parse_args(self) -> Namespace:
         """
