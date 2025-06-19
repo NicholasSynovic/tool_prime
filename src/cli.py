@@ -69,9 +69,6 @@ class CLI:
         # pr Subparser
         self.pull_request_parser = self.pull_request_subparser()
 
-        # ps Subparser
-        self.project_size_parser = self.project_size_subparser()
-
         # pp Subparser
         self.project_productivity_parser = self.project_productivity_subparser()
 
@@ -261,37 +258,6 @@ class CLI:
         )
 
         return pull_requests_parser
-
-    def project_size_subparser(self) -> ArgumentParser:
-        """
-        Define and return the argument subparser for the 'ps' command.
-
-        This subparser handles command-line arguments related to computing the
-        project size of a repository. Project size is measured in both bytes and
-        lines of code.
-
-        Returns:
-            ArgumentParser: Configured subparser for the 'ps' command.
-
-        """
-        project_size_parser: ArgumentParser = self.subparsers.add_parser(
-            name="ps",
-            help="Compute project size in lines of code and bytes",
-            description="The fifth stage of the metrics pipeline",
-            prog=f"{src.PROG} ps",
-            epilog=src.EPILOG,
-        )
-
-        project_size_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help="Path to SQLite3 database",
-            type=Path,
-            dest="project_size.output",
-        )
-
-        return project_size_parser
 
     def project_productivity_subparser(self) -> ArgumentParser:
         """
