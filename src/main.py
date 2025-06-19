@@ -13,8 +13,12 @@ from src.api.size import SCC
 from pandas import Series
 import pandas as pd
 from src.api.pull_requests import GitHubPullRequests
-from src.api.metrics import ProjectSizeMetric, ProjectProductivityMetric
-
+from src.api.metrics import (
+    ProjectSizeMetric,
+    ProjectProductivityMetric,
+    DailyProjectSizeMetric,
+)
+from pandas import Timestamp
 from pandas import DataFrame
 
 from src.api.db import DB
@@ -31,6 +35,7 @@ from src.api.types import (
     PullRequests,
     ProjectSize,
     ProjectProductivity,
+    DailyProjectSize,
 )
 from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
 from src.cli import CLI
@@ -308,31 +313,63 @@ def handle_pull_requests(namespace: dict[str, Any], db: DB) -> None:
 
 def handle_project_size(db: DB) -> None:
     """
-    Handle the computation and storage of project size metrics.
+    Handle project size metrics both per commit and per day.
 
-    This function reads the 'size' table from the database, computes the project
-    size metrics, and writes the results back to the 'project_size' table in the
-    database.
-
-    The function performs the following steps:
-    1. Reads the 'size' table from the database using the specified model
-        `Size`.
-    2. Initializes a `ProjectSizeMetric` object with the data from the 'size'
-        table.
-    3. Computes the project size metrics using the `compute` method of
-        `ProjectSizeMetric`.
-    4. Writes the computed metrics to the 'project_size' table in the database
-        using the specified model `ProjectSize`.
+    This function performs the following operations:
+    1. Executes an SQL query to retrieve daily project size data, including
+        committed datetime, by joining `commit_logs` and `project_size` tables.
+    2. Computes the project size per commit using the `ProjectSizeMetric` class,
+        which processes data from the `size` table.
+    3. Writes the computed project size per commit data back to the database in
+        the `project_size` table.
+    4. Retrieves daily project size data using the SQL query and processes the
+        `committed_datetime` column to convert it into `Timestamp` objects.
+    5. Computes the project size per day using the `DailyProjectSizeMetric`
+        class, which processes the input data derived from the SQL query.
+    6. Writes the computed project size per day data back to the database in the
+        `daily_project_size` table.
 
     Args:
-        db (DB): The database connection object used to read from and write to
-            the database.
+        db (DB): An instance of the database connection object used to execute
+            queries and write data.
 
     """
+    # SQL query to get input daily project size
+    sql_query: str = """
+    SELECT
+        ps.*,
+        c.committed_datetime
+    FROM
+        commit_logs c
+    JOIN
+        project_size ps ON c.commit_hash_id = ps.commit_hash_id;
+    """
+
+    # Compute size per commit
     size_table: DataFrame = db.read_table(table="size", model=Size)
     project_size: ProjectSizeMetric = ProjectSizeMetric(size_table=size_table)
     project_size.compute()
+
+    # Write size per commit to DB
     db.write_df(df=project_size.data, table="project_size", model=ProjectSize)
+
+    # Get daily project size data
+    daily_project_size_input: DataFrame = db.query_database(sql=sql_query)
+    daily_project_size_input["committed_datetime"] = daily_project_size_input[
+        "committed_datetime"
+    ].apply(lambda x: Timestamp(ts_input=x))
+    daily_project_size_input = daily_project_size_input.drop(columns="commit_hash_id")
+
+    # Compute size per day
+    daily_project_size: DailyProjectSizeMetric = DailyProjectSizeMetric(
+        input_data=daily_project_size_input
+    )
+    daily_project_size.compute()
+
+    # Write size per day to DB
+    db.write_df(
+        df=daily_project_size.data, table="daily_project_size", model=DailyProjectSize
+    )
 
 
 def handle_project_productivity(db: DB) -> None:

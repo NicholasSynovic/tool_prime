@@ -214,6 +214,18 @@ class DB:
         )
 
         _: Table = Table(
+            "daily_project_size",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("date", DateTime),
+            Column("lines", Integer),
+            Column("code", Integer),
+            Column("comments", Integer),
+            Column("blanks", Integer),
+            Column("bytes", Integer),
+        )
+
+        _: Table = Table(
             "project_productivity",
             self.metadata,
             Column("id", Integer, primary_key=True),
@@ -296,3 +308,23 @@ class DB:
         validate_df(model=model, df=df)
 
         return df
+
+    def query_database(self, sql: str, primary_key: str = "id") -> DataFrame:
+        """
+        Execute an SQL query on the connected database and return a DataFrame.
+
+        This function uses the provided SQL query string to fetch data from the
+        database using the established connection engine. The resulting
+        DataFrame is indexed by the specified primary key column.
+
+        Args:
+            sql (str): The SQL query string to be executed on the database.
+            primary_key (str, optional): The column name to be used as the index
+                for the resulting DataFrame. Defaults to "id".
+
+        Returns:
+            DataFrame: A pandas DataFrame containing the result of the SQL
+                query, indexed by the specified primary key column.
+
+        """
+        return pd.read_sql(sql=sql, con=self.engine, index_col=primary_key)

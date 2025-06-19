@@ -267,6 +267,34 @@ class ProjectSize(BaseModel):
     bytes: int = Field(default=..., description="Total number of bytes")
 
 
+class DailyProjectSize(BaseModel):
+    """
+    Data model representing the daily size metrics of a project.
+
+    This class is used to encapsulate various metrics related to the size of a
+    project on a specific date. It includes fields for the total number of lines,
+    code lines, comment lines, blank lines, and the total number of bytes. The
+    model is designed to be used with data validation libraries like Pydantic,
+    providing type safety and automatic validation.
+
+    Attributes:
+        date (datetime): The date on which the size measurement was taken.
+        lines (int): The total number of lines in the project on the given date.
+        code (int): The total number of lines that contain executable code.
+        comments (int): The total number of lines that are comments.
+        blanks (int): The total number of blank lines in the project.
+        bytes (int): The total number of bytes occupied by the project files.
+
+    """
+
+    date: datetime = Field(default=..., description="Date of measurement")
+    lines: int = Field(default=..., description="Total number of lines")
+    code: int = Field(default=..., description="Total number of code lines")
+    comments: int = Field(default=..., description="Total number of comment lines")
+    blanks: int = Field(default=..., description="Total number of blank lines")
+    bytes: int = Field(default=..., description="Total number of bytes")
+
+
 class ProjectProductivity(BaseModel):
     """
     A Pydantic model representing the productivity metrics of a project.
