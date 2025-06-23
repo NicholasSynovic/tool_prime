@@ -17,7 +17,7 @@ from progress.bar import Bar
 from src.api.db import DB
 from src.api.issues import GitHubIssues
 from src.api.metrics import (
-    BusFactorMetric,
+    BusFactorPerDay,
     FileSizePerCommit,
     ProjectProductivityPerCommit,
     ProjectProductivityPerDay,
@@ -36,6 +36,7 @@ from src.api.types import (
     PullRequestIDs,
     PullRequests,
     Releases,
+    T_BusFactorPerDay,
     T_FileSizePerCommit,
     T_ProjectProductivityPerCommit,
     T_ProjectProductivityPerDay,
@@ -368,14 +369,12 @@ def handle_project_productivity(db: DB) -> None:
     )
     pppd.compute()
 
+    # Write metrics to the database
     db.write_df(
         df=pppc.computed_data,
         table="project_productivity_per_commit",
         model=T_ProjectProductivityPerCommit,
     )
-
-    print(pppd.computed_data)
-    input()
 
     db.write_df(
         df=pppd.computed_data,
@@ -385,26 +384,38 @@ def handle_project_productivity(db: DB) -> None:
 
 
 def handle_bus_factor(db: DB) -> None:
-    # SQL query to get input daily project size
-    sql_query: str = """
-    SELECT
-        pp.*,
-        c.committed_datetime, c.committer_id
-    FROM
-        commit_logs c
-    JOIN
-        project_productivity pp ON c.commit_hash_id = pp.commit_hash_id;
-    """
-
-    input_data: DataFrame = db.query_database(sql=sql_query)
-
-    input_data["committed_datetime"] = input_data["committed_datetime"].apply(
-        lambda x: Timestamp(ts_input=x)
+    # Get project productivity per commit
+    project_productivity_per_commit: DataFrame = db.read_table(
+        table="project_productivity_per_commit",
+        model=T_ProjectProductivityPerCommit,
     )
-    input_data = input_data.drop(columns="commit_hash_id")
 
-    bus_factor: BusFactorMetric = BusFactorMetric(input_data=input_data)
-    bus_factor.compute()
+    # Bus factor per day requires datetimes of commits and the committer id
+    sql: str = (
+        "SELECT id, commit_hash_id, committed_datetime, committer_id FROM commit_logs"
+    )
+    commit_datetimes: DataFrame = db.query_database(sql=sql)
+    commit_datetimes["committed_datetime"] = commit_datetimes[
+        "committed_datetime"
+    ].apply(lambda x: Timestamp(ts_input=x))
+
+    # Join commit datetimes with project size per commit
+    bfpd_input_data: DataFrame = project_productivity_per_commit.merge(
+        commit_datetimes[["commit_hash_id", "committed_datetime", "committer_id"]],
+        on="commit_hash_id",
+        how="left",
+    )
+    bfpd_input_data = bfpd_input_data.drop(columns="commit_hash_id")
+
+    bfpd: BusFactorPerDay = BusFactorPerDay(input_data=bfpd_input_data)
+    bfpd.compute()
+
+    # Write metric to database
+    db.write_df(
+        df=bfpd.computed_data,
+        table="bus_factor",
+        model=T_BusFactorPerDay,
+    )
 
 
 def main() -> None:

@@ -12,7 +12,6 @@ import pandas as pd
 from pandas import DataFrame, Grouper, Series, Timestamp
 from pandas.core.groupby import DataFrameGroupBy
 from progress.bar import Bar
-from pydantic import BaseModel
 
 from src.api.size import SCC
 from src.api.vcs import VersionControlSystem
@@ -140,20 +139,43 @@ class ProjectSizePerCommit(Metric):
         self.computed_data = self.computed_data.reset_index(drop=True)
 
 
-class BusFactorMetric:
+class BusFactorPerDay(Metric):
     def __init__(self, input_data: DataFrame) -> None:
-        self.input_data: DataFrame = input_data
-        self.data: DataFrame = DataFrame()
+        super().__init__(input_data=input_data)
+        self.datum_list: list[DataFrame] = []
 
     def compute(self) -> None:
-        data: list[dict[str, Timestamp | int | float]] = []
-
-        grouped_data_by_day: DataFrameGroupBy = self.input_data.groupby(
-            by=Grouper(key="committed_datetime", freq="D")
+        data_grouped_by_days: DataFrameGroupBy = self.input_data.groupby(
+            by=Grouper(
+                key="committed_datetime",
+                freq="D",
+            ),
         )
 
-        idx: Timestamp
-        df: DataFrame
-        for idx, df in grouped_data_by_day:
-            print("\n", idx, df)
-            input()
+        with Bar("Computing bus factor...", max=len(data_grouped_by_days)) as bar:
+            idx: Timestamp
+            date_group: DataFrame
+            for idx, date_group in data_grouped_by_days:
+                date_group = date_group.drop(columns="committed_datetime")
+                date_group = date_group.abs()
+
+                data_group_by_committer: DataFrameGroupBy = date_group.groupby(
+                    by="committer_id",
+                )
+
+                committer_contributions: DataFrame = data_group_by_committer.sum(
+                    numeric_only=True
+                )
+                committer_contributions["committer_id"] = committer_contributions.index
+
+                if committer_contributions.empty:
+                    committer_contributions.loc[0] = [-1, -1, -1, -1, -1, -1]
+
+                committer_contributions["date"] = idx
+                committer_contributions = committer_contributions.reset_index(drop=True)
+
+                self.datum_list.append(committer_contributions)
+
+                bar.next()
+
+        self.computed_data = pd.concat(objs=self.datum_list, ignore_index=True)

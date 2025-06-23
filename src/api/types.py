@@ -72,6 +72,22 @@ class T_ProjectSizePerCommit(BaseModel):
     commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
 
 
+class T_BusFactorPerDay(BaseModel):
+    date: datetime = Field(default=..., description="Date of measurement")
+    committer_id: int = Field(default=..., description="Committer ID")
+    delta_lines: int = Field(default=..., description="Change in total number of lines")
+    delta_code: int = Field(
+        default=..., description="Change in total number of code lines"
+    )
+    delta_comments: int = Field(
+        default=..., description="Change in total number of comment lines"
+    )
+    delta_blanks: int = Field(
+        default=..., description="Change in total number of blank lines"
+    )
+    delta_bytes: int = Field(default=..., description="Change in total number of bytes")
+
+
 class CommitHashes(BaseModel):
     """
     Represents a commit hash of a specific commit.
