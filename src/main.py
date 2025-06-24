@@ -105,6 +105,8 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:  # no
             return DB(db_path=namespace["bus_factor.output"])
         case "issue_spoilage":
             return DB(db_path=namespace["issue_spoilage.output"])
+        case "issue_density":
+            return DB(db_path=namespace["issue_density.output"])
         case _:
             return None
 
@@ -480,29 +482,40 @@ def handle_issue_spoilage(db: DB) -> None:
     )
 
 
-# def handle_issue_density(db: DB) -> None:
-#     # Replace this with code for issue spoilage
+def handle_issue_density(db: DB) -> None:
+    # Get issue spoilage per day
+    issue_spoilage_per_day: DataFrame = db.read_table(
+        table="issue_spoilage_per_day",
+        model=T_IssueSpoilagePerDay,
+    )
 
-#     current_day: Timestamp = Timestamp.utcnow().floor(freq="D")
+    # Get project size per day
+    project_size_per_day: DataFrame = db.read_table(
+        table="project_size_per_day",
+        model=T_ProjectSizePerDay,
+    )
 
-#     issues: DataFrame = db.read_table(table="issues", model=Issues)
-#     project_size_per_day: DataFrame = db.read_table(table="project_size_per_day", model=T_ProjectSizePerDay,)
+    # Set dates to be Timestamps
+    issue_spoilage_per_day["start"] = issue_spoilage_per_day["start"].apply(
+        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
+    )
+    issue_spoilage_per_day["end"] = issue_spoilage_per_day["end"].apply(
+        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
+    )
 
-#     issues["created_at"] = issues["created_at"].apply(lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),)
-#     issues["closed_at"] = issues["closed_at"].apply(lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),)
-#     project_size_per_day["date"] = project_size_per_day["date"].apply(lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),)
+    project_size_per_day["date"] = project_size_per_day["date"].apply(
+        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
+    )
 
-#     oldest_issue_timestamp: Timestamp = issues["created_at"].min()
-#     oldest_size_timestamp: Timestamp = project_size_per_day["date"].min()
-#     oldest_timestamp: Timestamp = min(oldest_size_timestamp, oldest_issue_timestamp,)
+    data: DataFrame = issue_spoilage_per_day.merge(
+        project_size_per_day.rename(
+            columns={"date": "start"}
+        ),  # rename so merge key matches
+        on="start",
+        how="left",
+    ).ffill()
 
-#     interval_index: IntervalIndex = pd.interval_range(start=oldest_timestamp, end=current_day, freq="D",)
-
-#     data: DataFrame = DataFrame()
-#     data["date"] = interval_index.right
-#     data["size"] = 0
-#     data["size"] = project_size_per_day[project_size_per_day["date"] == data["date"]]
-#     print(data)
+    print(data)
 
 
 def main() -> None:
@@ -544,6 +557,8 @@ def main() -> None:
             handle_bus_factor(db=db)
         case "issue_spoilage":
             handle_issue_spoilage(db=db)
+        case "issue_density":
+            handle_issue_density(db=db)
         case _:
             sys.exit(3)
 
