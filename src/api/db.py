@@ -253,6 +253,15 @@ class DB:
             Column("bytes", Integer),
         )
 
+        _: Table = Table(
+            "issue_spoilage_per_day",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("start", DateTime),
+            Column("end", DateTime),
+            Column("open_issues", Integer),
+        )
+
         self.metadata.create_all(bind=self.engine, checkfirst=True)
 
     def write_df(self, df: DataFrame, table: str, model: type[BaseModel]) -> bool:

@@ -497,7 +497,12 @@ def handle_issue_spoilage(db: DB) -> None:
     )
     ispd.compute()
 
-    print(ispd.computed_data)
+    # Write metric to database
+    db.write_df(
+        df=ispd.computed_data,
+        table="issue_spoilage_per_day",
+        model=T_IssueSpoilagePerDay,
+    )
 
 
 def main() -> None:
