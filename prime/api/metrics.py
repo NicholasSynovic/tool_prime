@@ -107,6 +107,7 @@ class ProjectSizePerDay(Metric):
         super().__init__(input_data=input_data)
 
     def compute(self) -> None:
+        # Group data by committed datetime
         data_grouped_by_days: DataFrameGroupBy = self.input_data.groupby(
             by=Grouper(
                 key="committed_datetime",
@@ -114,15 +115,24 @@ class ProjectSizePerDay(Metric):
             ),
         )
 
-        self.computed_data = data_grouped_by_days.nth[-1]
-        self.computed_data = self.computed_data.reset_index(drop=True)
-        self.computed_data["date"] = self.computed_data["committed_datetime"]
-        self.computed_data = self.computed_data.drop(
+        # Get the most recent commit information per group
+        scratch_dataframe: DataFrame = data_grouped_by_days.nth[-1]
+        scratch_dataframe = scratch_dataframe.reset_index(drop=True)
+        scratch_dataframe["date"] = scratch_dataframe["committed_datetime"]
+        scratch_dataframe = scratch_dataframe.drop(
             columns=[
                 "commit_hash_id",
                 "committed_datetime",
             ]
         )
+
+        # Fill in missing dates
+        date_fill_dataframe: DataFrame = scratch_dataframe.set_index(
+            keys="date",
+        )
+        date_fill_dataframe = date_fill_dataframe.resample(rule="D").ffill()
+
+        self.computed_data = date_fill_dataframe.reset_index()
 
 
 class ProjectSizePerCommit(Metric):
