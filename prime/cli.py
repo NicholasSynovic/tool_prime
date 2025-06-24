@@ -8,6 +8,7 @@ Copyright 2025 (C) Nicholas M. Synovic
 import importlib.metadata
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 from pathlib import Path
+from typing import Any
 
 import prime
 
@@ -115,6 +116,23 @@ def add_gh_args(
         type=str,
         dest=f"{dest_var}.repo_name",
     )
+
+
+def get_first_namespace_key(namespace: dict[str, Any]) -> str:
+    """
+    Retrieve the first unique key prefix from a namespace dictionary.
+
+    This function extracts the prefix from each key in the provided dictionary,
+    splits the keys by the '.' character, and returns the first unique prefix found.
+
+    Args:
+        namespace (dict[str, Any]): The dictionary containing namespace keys.
+
+    Returns:
+        str: The first unique prefix from the keys in the namespace.
+
+    """
+    return {key.split(".")[0] for key in namespace}.pop()
 
 
 class CLI:
