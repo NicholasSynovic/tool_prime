@@ -12,7 +12,7 @@
 
 Tested with GPT-4o:
 
-```Prompt
+```text
 Write docstrings for Python classes and methods. Specify "Args" and "Return". First line of docstring should be in imperative mood. Docstring should not have a returns section if the function doesn't return anything
 
 {METHOD/CLASS Python CODE}

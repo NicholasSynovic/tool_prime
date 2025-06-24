@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import prime
+from prime.api.utils import resolve_path
 
 
 def add_output_argument(
@@ -38,7 +39,7 @@ def add_output_argument(
         "--output",
         required=True,
         help=prime.OUTPUT_HELP,
-        type=Path,
+        type=resolve_path,
         dest=f"{dest_var}.output",
     )
 
@@ -68,7 +69,7 @@ def add_input_argument(
         "--input",
         required=True,
         help=prime.REPO_PATH_INPUT_HELP,
-        type=Path,
+        type=resolve_path,
         dest=f"{dest_var}.input",
     )
 

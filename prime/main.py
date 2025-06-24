@@ -6,13 +6,12 @@ Copyright (C) 2025 Nicholas M. Synovic.
 """
 
 import sys
-from collections import defaultdict
 from math import ceil
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from pandas import DataFrame, Interval, IntervalIndex, Timestamp
+from pandas import DataFrame, IntervalIndex, Timestamp
 from progress.bar import Bar
 
 from prime.api.db import DB
@@ -53,43 +52,26 @@ from prime.api.utils import (
     replace_dataframe_value_column_with_index_reference,
 )
 from prime.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
-from prime.cli import CLI
+from prime.cli import CLI, get_first_namespace_key
 
 
-def get_first_namespace_key(namespace: dict[str, Any]) -> str:
+def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
     """
-    Return a top-level key prefix from a namespaced dictionary.
+    Handle database initialization based on the provided namespace key.
 
-    This function assumes that keys in the dictionary follow a dot-separated namespace
-    format (e.g., "user.name", "config.value"). It splits each key at the first
-    dot and collects the first segment, then returns one arbitrary unique prefix
-    from the resulting set.
+    This function matches the `namespace_key` to predefined cases and
+    initializes a database object using the corresponding output path from the
+    `namespace` dictionary. If the `namespace_key` does not match any predefined
+    case, it returns None.
 
     Args:
-        namespace (dict[str, Any]): A dictionary with dot-separated string keys.
+        namespace (dict[str, Any]): The dictionary containing namespace keys and
+            values.
+        namespace_key (str): The key indicating which database path to use.
 
     Returns:
-        str: A single unique top-level key prefix extracted from the keys.
-
-    """
-    return {key.split(".")[0] for key in namespace}.pop()
-
-
-def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:  # noqa: PLR0911
-    """
-    Connect to the database based on the provided namespace key.
-
-    This function establishes a database connection using the information
-    extracted from the command-line namespace.
-
-    Args:
-        namespace: A dictionary containing command-line arguments.
-        namespace_key: The key indicating the type of database connection required
-            (e.g., "vcs", "size").
-
-    Returns:
-        A DB object representing the established database connection, or None
-        if no suitable connection can be created.
+        DB | None: A DB object initialized with the appropriate path, or None if
+            the `namespace_key` does not match any case.
 
     """
     match namespace_key:
@@ -113,33 +95,44 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:  # no
             return None
 
 
-def handle_vcs(namespace: dict[str, Any], db: DB) -> None:
+def handle_vcs(namespace: dict[str, Any], db: DB) -> bool:
     """
-    Process VCS data and store it in the database.
+    Handle version control system parsing and database operations.
 
-    This function retrieves VCS data from a specified repository,
-    processes it, and stores the results in the database.
+    This function identifies the version control system of a given repository,
+    parses it for revisions, and writes the parsed data into the database.
+    If the version control system is invalid, the function returns False.
 
     Args:
-        namespace: A dictionary containing command-line arguments.
-        db: A DB object representing the database connection.
+        namespace (dict[str, Any]): The dictionary containing namespace keys
+            and values.
+        db (DB): The database object used for reading and writing data.
+
+    Returns:
+        bool: True if the VCS parsing and database operations are successful,
+            False otherwise.
 
     """
+    # Get the commits that have already been stored
     existing_commits_df: DataFrame = db.read_table(
         table="commit_hashes",
         model=CommitHashes,
     )
 
-    repository_path: Path = Path(namespace["vcs.input"]).resolve()
-    vcs: VersionControlSystem | int = identify_vcs(repo_path=repository_path)
-    if vcs == -1:
-        sys.exit(2)
+    # Identify the VCS. If invalid, return False
+    vcs: VersionControlSystem | int = identify_vcs(
+        repo_path=namespace["vcs.input"],
+    )
+    if isinstance(vcs, int):
+        return False
 
+    # Parse VCS for revisions
     data: dict[str, DataFrame] = parse_vcs(
         vcs=vcs,
         previous_revisions=existing_commits_df,
     )
 
+    # Write tables
     db.write_df(
         df=data["commit_hashes"],
         table="commit_hashes",
@@ -150,15 +143,16 @@ def handle_vcs(namespace: dict[str, Any], db: DB) -> None:
     db.write_df(df=data["commit_logs"], table="commit_logs", model=CommitLog)
     db.write_df(df=data["releases"], table="releases", model=Releases)
 
+    return True
 
-def handle_size(namespace: dict[str, Any], db: DB) -> None:
-    # Get repository path
-    repo_path: Path = Path(namespace["size.input"]).resolve()
 
+def handle_size(namespace: dict[str, Any], db: DB) -> bool:
     # Instantiate VCS class
-    vcs: VersionControlSystem | int = identify_vcs(repo_path=repo_path)
+    vcs: VersionControlSystem | int = identify_vcs(
+        repo_path=namespace["size.input"],
+    )
     if isinstance(vcs, int):
-        sys.exit(2)
+        return False
 
     # Instantiate SCC class
     scc: SCC = SCC(directory=vcs.repo_path)
@@ -177,18 +171,32 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
     )
     fspc.compute()
 
+    # Write file size per commit to the database
+    db.write_df(
+        df=fspc.computed_data,
+        table="file_size_per_commit",
+        model=T_FileSizePerCommit,
+    )
+
     # Compute size of the project per commit
     pspc: ProjectSizePerCommit = ProjectSizePerCommit(
         file_sizes=fspc.computed_data,
     )
     pspc.compute()
 
+    # Write project size per commit to the database
+    db.write_df(
+        df=pspc.computed_data,
+        table="project_size_per_commit",
+        model=T_ProjectSizePerCommit,
+    )
+
     # Project size per day requires datetimes of commits
     sql: str = "SELECT id, commit_hash_id, committed_datetime FROM commit_logs"
     commit_datetimes: DataFrame = db.query_database(sql=sql)
     commit_datetimes["committed_datetime"] = commit_datetimes[
         "committed_datetime"
-    ].apply(lambda x: Timestamp(ts_input=x))
+    ].apply(lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"))
 
     # Join commit datetimes with project size per commit
     pspd_input_data: DataFrame = pspc.computed_data.copy()
@@ -203,21 +211,14 @@ def handle_size(namespace: dict[str, Any], db: DB) -> None:
     pspd.compute()
 
     # Write metrics to the database
-    db.write_df(
-        df=fspc.computed_data,
-        table="file_size_per_commit",
-        model=T_FileSizePerCommit,
-    )
-    db.write_df(
-        df=pspc.computed_data,
-        table="project_size_per_commit",
-        model=T_ProjectSizePerCommit,
-    )
+
     db.write_df(
         df=pspd.computed_data,
         table="project_size_per_day",
         model=T_ProjectSizePerDay,
     )
+
+    return True
 
 
 def handle_issues(namespace: dict[str, Any], db: DB) -> None:

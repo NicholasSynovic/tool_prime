@@ -114,11 +114,15 @@ class ProjectSizePerDay(Metric):
             ),
         )
 
-        self.computed_data = data_grouped_by_days.sum(numeric_only=True)
-        self.computed_data = self.computed_data.drop(columns="commit_hash_id")
-
-        self.computed_data["date"] = self.computed_data.index
+        self.computed_data = data_grouped_by_days.nth[-1]
         self.computed_data = self.computed_data.reset_index(drop=True)
+        self.computed_data["date"] = self.computed_data["committed_datetime"]
+        self.computed_data = self.computed_data.drop(
+            columns=[
+                "commit_hash_id",
+                "committed_datetime",
+            ]
+        )
 
 
 class ProjectSizePerCommit(Metric):
