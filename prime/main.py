@@ -14,9 +14,10 @@ from typing import Any
 import pandas as pd
 from pandas import DataFrame, Interval, IntervalIndex, Timestamp
 from progress.bar import Bar
-from src.api.db import DB
-from src.api.issues import GitHubIssues
-from src.api.metrics import (
+
+from prime.api.db import DB
+from prime.api.issues import GitHubIssues
+from prime.api.metrics import (
     BusFactorPerDay,
     FileSizePerCommit,
     IssueDensityPerDay,
@@ -26,9 +27,9 @@ from src.api.metrics import (
     ProjectSizePerCommit,
     ProjectSizePerDay,
 )
-from src.api.pull_requests import GitHubPullRequests
-from src.api.size import SCC
-from src.api.types import (
+from prime.api.pull_requests import GitHubPullRequests
+from prime.api.size import SCC
+from prime.api.types import (
     Authors,
     CommitHashes,
     CommitLog,
@@ -47,12 +48,12 @@ from src.api.types import (
     T_ProjectSizePerCommit,
     T_ProjectSizePerDay,
 )
-from src.api.utils import (
+from prime.api.utils import (
     copy_dataframe_columns_to_dataframe,
     replace_dataframe_value_column_with_index_reference,
 )
-from src.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
-from src.cli import CLI
+from prime.api.vcs import VersionControlSystem, identify_vcs, parse_vcs
+from prime.cli import CLI
 
 
 def get_first_namespace_key(namespace: dict[str, Any]) -> str:

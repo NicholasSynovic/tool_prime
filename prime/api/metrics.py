@@ -18,8 +18,9 @@ from pandas import (
 )
 from pandas.core.groupby import DataFrameGroupBy
 from progress.bar import Bar
-from src.api.size import SCC
-from src.api.vcs import VersionControlSystem
+
+from prime.api.size import SCC
+from prime.api.vcs import VersionControlSystem
 
 
 class Metric(ABC):

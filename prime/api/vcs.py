@@ -15,7 +15,8 @@ from git import Commit, Repo, TagReference
 from git.exc import InvalidGitRepositoryError
 from pandas import DataFrame
 from progress.bar import Bar
-from src.api.utils import (
+
+from prime.api.utils import (
     copy_dataframe_cols_and_remove_duplicate_rows_by_col,
     copy_dataframe_columns_to_dataframe,
     replace_dataframe_value_column_with_index_reference,

@@ -22,7 +22,8 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.exc import IntegrityError
-from src.api.types import validate_df
+
+from prime.api.types import validate_df
 
 
 class DB:
