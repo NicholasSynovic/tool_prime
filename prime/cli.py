@@ -26,6 +26,20 @@ def add_output_argument(
     )
 
 
+def add_input_argument(
+    parser: ArgumentParser,
+    dest_var: str,
+) -> None:
+    parser.add_argument(
+        "-i",
+        "--input",
+        required=True,
+        help=prime.REPO_PATH_INPUT_HELP,
+        type=Path,
+        dest=f"{dest_var}.input",
+    )
+
+
 class CLI:
     def __init__(self) -> None:
         self.parser: ArgumentParser = ArgumentParser(
@@ -77,14 +91,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        vcs_parser.add_argument(
-            "-i",
-            "--input",
-            required=True,
-            help=prime.REPO_PATH_INPUT_HELP,
-            type=Path,
-            dest="vcs.input",
-        )
+        add_input_argument(parser=vcs_parser, dest_var="vcs")
         add_output_argument(parser=vcs_parser, dest_var="vcs")
 
         return vcs_parser
@@ -98,14 +105,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        size_parser.add_argument(
-            "-i",
-            "--input",
-            required=True,
-            help=prime.REPO_PATH_INPUT_HELP,
-            type=Path,
-            dest="size.input",
-        )
+        add_input_argument(parser=size_parser, dest_var="size")
         add_output_argument(parser=size_parser, dest_var="size")
 
         return size_parser
@@ -120,7 +120,8 @@ class CLI:
         )
 
         add_output_argument(
-            parser=project_productivity_parser, dest_var="project_productivity"
+            parser=project_productivity_parser,
+            dest_var="project_productivity",
         )
 
         return project_productivity_parser
