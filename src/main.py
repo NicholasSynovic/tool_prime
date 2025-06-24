@@ -499,10 +499,10 @@ def handle_issue_density(db: DB) -> None:
 
     # Set dates to be Timestamps
     issue_spoilage_per_day["start"] = issue_spoilage_per_day["start"].apply(
-        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
+        lambda x: Timestamp(ts_input=x, tz="UTC"),
     )
     issue_spoilage_per_day["end"] = issue_spoilage_per_day["end"].apply(
-        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
+        lambda x: Timestamp(ts_input=x, tz="UTC"),
     )
 
     project_size_per_day["date"] = project_size_per_day["date"].apply(
