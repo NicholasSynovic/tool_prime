@@ -6,14 +6,23 @@ Copyright (C) 2025 Nicholas M. Synovic.
 """
 
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from collections.abc import Iterator
 
 import pandas as pd
-from pandas import DataFrame, Grouper, Series, Timestamp
+from pandas import (
+    DataFrame,
+    Grouper,
+    Interval,
+    IntervalIndex,
+    Series,
+    Timestamp,
+)
 from pandas.core.groupby import DataFrameGroupBy
 from progress.bar import Bar
 
 from src.api.size import SCC
+from src.api.types import Issues
 from src.api.vcs import VersionControlSystem
 
 
@@ -179,3 +188,36 @@ class BusFactorPerDay(Metric):
                 bar.next()
 
         self.computed_data = pd.concat(objs=self.datum_list, ignore_index=True)
+
+
+class IssueSpoilagePerDay(Metric):
+    def __init__(
+        self,
+        daily_intervals: IntervalIndex,
+        input_data: DataFrame,
+    ) -> None:
+        super().__init__(input_data=input_data)
+        self.daily_intervals: IntervalIndex = daily_intervals
+
+    def compute(self) -> None:
+        # Extract left and right bounds from input intervals
+        input_left = self.input_data["interval"].apply(lambda i: i.left).values
+        input_right = self.input_data["interval"].apply(lambda i: i.right).values
+
+        # Extract left and right bounds from daily intervals
+        daily_left = self.daily_intervals.left.values
+        daily_right = self.daily_intervals.right.values
+
+        # Broadcast comparisons: input intervals that fully cover daily intervals
+        # Shape: (num_daily, num_input)
+        covers = (input_left[None, :] <= daily_left[:, None]) & (
+            input_right[None, :] >= daily_right[:, None]
+        )
+
+        # Count how many input intervals cover each daily interval
+        open_issues = covers.sum(axis=1)
+
+        # Construct result DataFrame
+        self.computed_data = pd.DataFrame(
+            {"start": daily_left, "end": daily_right, "open_issues": open_issues}
+        )

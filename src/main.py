@@ -20,6 +20,7 @@ from src.api.issues import GitHubIssues
 from src.api.metrics import (
     BusFactorPerDay,
     FileSizePerCommit,
+    IssueSpoilagePerDay,
     ProjectProductivityPerCommit,
     ProjectProductivityPerDay,
     ProjectSizePerCommit,
@@ -39,6 +40,7 @@ from src.api.types import (
     Releases,
     T_BusFactorPerDay,
     T_FileSizePerCommit,
+    T_IssueSpoilagePerDay,
     T_ProjectProductivityPerCommit,
     T_ProjectProductivityPerDay,
     T_ProjectSizePerCommit,
@@ -446,24 +448,22 @@ def handle_bus_factor(db: DB) -> None:
 #     print(data)
 
 
-def handle_issue_density(db: DB) -> None:
-    # Issue spoilage is the number of open issues on a given day
-    # We assume that all issues open at midnight 00:00 and close at 23:59
-    data: list[DataFrame] = []
+def handle_issue_spoilage(db: DB) -> None:
+    # SQL to get the smallest date from VCS
+    sql: str = "SELECT id, MIN(date) as date FROM project_size_per_day;"
 
     # Get current day
     current_date: Timestamp = Timestamp.utcnow().floor(freq="D")
 
     # Get all valid dates from the VCS; issues can't be created before the
     # project is created
-    sql: str = "SELECT id, date FROM project_size_per_day;"
     vcs_dates: DataFrame = db.query_database(sql=sql)
-    vcs_dates["date"] = vcs_dates["date"].apply(
-        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
-    )
-    oldest_date: Timestamp = vcs_dates["date"].min()
+    oldest_date: Timestamp = Timestamp(
+        ts_input=vcs_dates["date"][0],
+        tz="UTC",
+    ).floor(freq="D")
 
-    # Create time intervals (00:00 -> 23:59:59)
+    # Create daily time intervals from 00:00:00 -> 23:59:59
     daily_intervals: IntervalIndex = IntervalIndex.from_arrays(
         left=pd.date_range(start=oldest_date, end=current_date, freq="D"),
         right=pd.date_range(start=oldest_date, end=current_date, freq="D")
@@ -473,7 +473,7 @@ def handle_issue_density(db: DB) -> None:
             seconds=59,
         ),
         closed="both",
-    )
+    )[0:-1]
 
     # Get issues and set created_at and closed_at to pandas.Timestamp
     issues: DataFrame = db.read_table(table="issues", model=Issues)
@@ -491,27 +491,13 @@ def handle_issue_density(db: DB) -> None:
         axis=1,
     )
 
-    with Bar(
-        "Computing issue spoilage per day...",
-        max=daily_intervals.shape[0],
-    ) as bar:
-        interval: Interval
-        for interval in daily_intervals:
-            datum: dict[str, list[Interval | int]] = defaultdict(list)
-            datum["start"].append(interval.left)
-            datum["end"].append(interval.right)
-            datum["open_issues"].append(
-                issues["interval"]
-                .apply(lambda x: x.left <= interval.left and x.right >= interval.right)
-                .sum()
-            )
-            data.append(DataFrame(data=datum))
-            bar.next()
+    ispd: IssueSpoilagePerDay = IssueSpoilagePerDay(
+        daily_intervals=daily_intervals,
+        input_data=issues,
+    )
+    ispd.compute()
 
-    print(pd.concat(objs=data, ignore_index=True))
-
-    # result = pd.DataFrame({'bin': time_intervals, 'count': counts})
-    # print(result)
+    print(ispd.computed_data)
 
 
 def main() -> None:
@@ -552,7 +538,7 @@ def main() -> None:
         case "bus_factor":
             handle_bus_factor(db=db)
         case "issue_density":
-            handle_issue_density(db=db)
+            handle_issue_spoilage(db=db)
         case _:
             sys.exit(3)
 
