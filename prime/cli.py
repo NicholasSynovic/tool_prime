@@ -16,6 +16,22 @@ def add_output_argument(
     parser: ArgumentParser,
     dest_var: str,
 ) -> None:
+    """
+    Add a required output argument to the argument parser.
+
+    This function modifies the provided ArgumentParser object by adding a
+    required output argument. The argument is specified with the flags '-o' and
+    '--output', and it expects a path as its value. The destination variable
+    for the argument is constructed using the provided `dest_var` string.
+
+    Args:
+        parser (ArgumentParser): The argument parser to which the output
+            argument will be added.
+        dest_var (str): The base name for the destination variable where the
+            output path will be stored. The final destination will be formatted
+            as '{dest_var}.output'.
+
+    """
     parser.add_argument(
         "-o",
         "--output",
@@ -30,6 +46,22 @@ def add_input_argument(
     parser: ArgumentParser,
     dest_var: str,
 ) -> None:
+    """
+    Add a required input argument to the argument parser.
+
+    This function modifies the provided ArgumentParser object by adding a
+    required input argument. The argument is specified with the flags '-i' and
+    '--intput', and it expects a path as its value. The destination variable
+    for the argument is constructed using the provided `dest_var` string.
+
+    Args:
+        parser (ArgumentParser): The argument parser to which the input
+            argument will be added.
+        dest_var (str): The base name for the destination variable where the
+            input path will be stored. The final destination will be formatted
+            as '{dest_var}.input'.
+
+    """
     parser.add_argument(
         "-i",
         "--input",
@@ -44,6 +76,23 @@ def add_gh_args(
     parser: ArgumentParser,
     dest_var: str,
 ) -> None:
+    """
+    Add GitHub-related arguments to the argument parser.
+
+    This function modifies the provided ArgumentParser object by adding required
+    arguments related to GitHub authentication and repository identification.
+    The arguments include authentication token, repository owner, and repository
+    name.
+
+    Args:
+        parser (ArgumentParser): The argument parser to which the GitHub
+            arguments will be added.
+        dest_var (str): The base name for the destination variables where the
+            GitHub argument values will be stored. The final destinations will
+            be formatted as '{dest_var}.auth', '{dest_var}.owner', and
+            '{dest_var}.repo_name'.
+
+    """
     parser.add_argument(
         "-a",
         "--auth",
@@ -69,7 +118,23 @@ def add_gh_args(
 
 
 class CLI:
+    """
+    Command Line Interface for parsing and executing various subcommands.
+
+    This class sets up an argument parser with multiple subcommands, each
+    corresponding to a specific task related to project analysis, such as
+    version control system parsing, size measurement, project productivity
+    computation, and more.
+
+    Attributes:
+        parser (ArgumentParser): The main argument parser for the CLI.
+        subparsers (_SubParsersAction[ArgumentParser]): The subparsers for
+            different tasks.
+
+    """
+
     def __init__(self) -> None:
+        """Initialize the CLI with subparsers."""
         self.parser: ArgumentParser = ArgumentParser(
             prog=prime.PROG,
             description=prime.DESCRIPTION,
@@ -86,31 +151,24 @@ class CLI:
             self.parser.add_subparsers()
         )
 
-        # Version Control System (VCS) Subparser
-        self.vcs_parser = self.vcs_subparser()
-
-        # Size Subparser
-        self.size_parser = self.size_subparser()
-
-        # Project Productivity Subparser
-        self.project_productivity_parser = self.project_productivity_subparser()
-
-        # Bus Factor Subparser
-        self.bus_factor_parser = self.bus_factor_subparser()
-
-        # Pull Request Subparser
-        self.pull_request_parser = self.pull_request_subparser()
-
-        # Issue Subparser
-        self.issue_parser = self.issue_subparser()
-
-        # Issue Spoilage Subparser
-        self.issue_spoilage_parser = self.issue_spoilage_subparser()
-
-        # Issue Density Subparser
-        self.issue_density_parser = self.issue_density_subparser()
+        # Initialize subparsers for different tasks
+        self.vcs_subparser()
+        self.size_subparser()
+        self.project_productivity_subparser()
+        self.bus_factor_subparser()
+        self.pull_request_subparser()
+        self.issue_subparser()
+        self.issue_spoilage_subparser()
+        self.issue_density_subparser()
 
     def vcs_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for parsing version control system metadata.
+
+        Returns:
+            ArgumentParser: The subparser for the 'vcs' command.
+
+        """
         vcs_parser: ArgumentParser = self.subparsers.add_parser(
             name="vcs",
             help="Parse a project's version control system for project metadata",
@@ -125,6 +183,13 @@ class CLI:
         return vcs_parser
 
     def size_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for measuring repository size by lines of code.
+
+        Returns:
+            ArgumentParser: The subparser for the 'size' command.
+
+        """
         size_parser: ArgumentParser = self.subparsers.add_parser(
             name="size",
             help="Measure the size of repository by lines of code",
@@ -139,6 +204,14 @@ class CLI:
         return size_parser
 
     def project_productivity_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for computing project productivity.
+
+        Returns:
+            ArgumentParser: The subparser for the 'project-productivity'
+                command.
+
+        """
         project_productivity_parser: ArgumentParser = self.subparsers.add_parser(
             name="project-productivity",
             help="Compute project productivity",
@@ -155,6 +228,13 @@ class CLI:
         return project_productivity_parser
 
     def bus_factor_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for computing bus factor.
+
+        Returns:
+            ArgumentParser: The subparser for the 'bus-factor' command.
+
+        """
         bus_factor_parser: ArgumentParser = self.subparsers.add_parser(
             name="bus-factor",
             help="Compute bus factor",
@@ -168,6 +248,13 @@ class CLI:
         return bus_factor_parser
 
     def issue_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for retrieving issue metadata from a GitHub repository.
+
+        Returns:
+            ArgumentParser: The subparser for the 'issues' command.
+
+        """
         issue_parser: ArgumentParser = self.subparsers.add_parser(
             name="issues",
             help="Get issue metadata from a GitHub repository",
@@ -182,6 +269,13 @@ class CLI:
         return issue_parser
 
     def pull_request_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for retrieving pull requests from a GitHub repository.
+
+        Returns:
+            ArgumentParser: The subparser for the 'pull-requests' command.
+
+        """
         pull_requests_parser: ArgumentParser = self.subparsers.add_parser(
             name="pull-requests",
             help="Get pull request metadata from a GitHub repository",
@@ -199,6 +293,13 @@ class CLI:
         return pull_requests_parser
 
     def issue_spoilage_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for computing issue spoilage.
+
+        Returns:
+            ArgumentParser: The subparser for the 'issue-spoilage' command.
+
+        """
         issue_spoilage_parser: ArgumentParser = self.subparsers.add_parser(
             name="issue-spoilage",
             help="Compute issue spoilage",
@@ -215,6 +316,13 @@ class CLI:
         return issue_spoilage_parser
 
     def issue_density_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for computing issue density.
+
+        Returns:
+            ArgumentParser: The subparser for the 'issue-density' command.
+
+        """
         issue_density_parser: ArgumentParser = self.subparsers.add_parser(
             name="issue-density",
             help="Compute issue density",
@@ -231,4 +339,11 @@ class CLI:
         return issue_density_parser
 
     def parse_args(self) -> Namespace:
+        """
+        Parse the command-line arguments.
+
+        Returns:
+            Namespace: The parsed arguments as a Namespace object.
+
+        """
         return self.parser.parse_args()
