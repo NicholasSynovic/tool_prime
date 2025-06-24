@@ -75,8 +75,8 @@ class CLI:
         # bf Subparser
         self.bus_factor_parser = self.bus_factor_subparser()
 
-        # id Subparser
-        self.issue_density_parser = self.issue_density_subparser()
+        # is Subparser
+        self.issue_spoilage_parser = self.issue_spoilage_subparser()
 
     def vcs_subparser(self) -> ArgumentParser:
         """
@@ -325,8 +325,8 @@ class CLI:
 
         return bus_factor_parser
 
-    def issue_density_subparser(self) -> ArgumentParser:
-        issue_density_parser: ArgumentParser = self.subparsers.add_parser(
+    def issue_spoilage_subparser(self) -> ArgumentParser:
+        issue_spoilage_parser: ArgumentParser = self.subparsers.add_parser(
             name="id",
             help="Compute issue density",
             description="The eighth stage of the metrics pipeline",
@@ -334,7 +334,7 @@ class CLI:
             epilog=src.EPILOG,
         )
 
-        issue_density_parser.add_argument(
+        issue_spoilage_parser.add_argument(
             "-o",
             "--output",
             required=True,
@@ -343,7 +343,7 @@ class CLI:
             dest="issue_density.output",
         )
 
-        return issue_density_parser
+        return issue_spoilage_parser
 
     def parse_args(self) -> Namespace:
         """
