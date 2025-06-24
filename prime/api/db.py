@@ -22,7 +22,6 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.exc import IntegrityError
-
 from src.api.types import validate_df
 
 

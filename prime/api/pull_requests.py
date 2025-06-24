@@ -12,14 +12,13 @@ from string import Template
 import pandas as pd
 from pandas import DataFrame
 from requests import Response
-
 from src.api import VALID_RESPONSE_CODE
 from src.api.utils import query_graphql
 
 
-class GitHubIssues:
+class GitHubPullRequests:
     """
-    Class to interact with the GitHub GraphQL API to fetch issue metadata.
+    Class to interact with the GitHub GraphQL API to fetch pull request metadata.
 
     Attributes:
         base_url (str): The GitHub GraphQL API endpoint.
@@ -32,11 +31,11 @@ class GitHubIssues:
             GraphQL queries.
 
     Methods:
-        get_total_issues() -> int:
-            Retrieves the total number of issues in the repository.
+        get_total_pull requests() -> int:
+            Retrieves the total number of pull requests in the repository.
 
-        get_issues(after_cursor: str = "null") -> tuple[pd.DataFrame, str, bool]:
-            Retrieves paginated issue metadata from the repository.
+        get_pull requests(after_cursor: str = "null") -> tuple[pd.DataFrame, str, bool]:
+            Retrieves paginated pull request metadata from the repository.
 
     """
 
@@ -65,12 +64,12 @@ class GitHubIssues:
             headers=self.headers,
         )
 
-    def get_total_issues(self) -> int:
+    def get_total_pull_requests(self) -> int:
         """
-        Query the GitHub GraphQL API to retrieve the total number of issues.
+        Query the GitHub GraphQL API to retrieve the total number of pull requests.
 
         Returns:
-            int: The total count of issues if the request is successful;
+            int: The total count of pull requests if the request is successful;
                 -1 if the request fails (e.g., due to a non-200 status code).
 
         """
@@ -78,7 +77,7 @@ class GitHubIssues:
             template="""
             query {
                 repository(name:"$name", owner:"$owner") {
-                    issues {
+                    pullRequests {
                         totalCount
                     }
                 },
@@ -100,33 +99,37 @@ class GitHubIssues:
         if response.status_code != VALID_RESPONSE_CODE:
             return -1
 
-        return response.json()["data"]["repository"]["issues"]["totalCount"]
+        return response.json()["data"]["repository"]["pullRequests"]["totalCount"]
 
-    def get_issues(self, after_cursor: str = "null") -> tuple[DataFrame, str, bool]:
+    def get_pull_requests(
+        self, after_cursor: str = "null"
+    ) -> tuple[DataFrame, str, bool]:
         """
-        Retrieve a page of GitHub issues from a repository using GraphQL.
+        Retrieve a page of GitHub pull requests from a repository using GraphQL.
 
-        Constructs and sends a GraphQL query to retrieve up to 100 issues from
+        Constructs and sends a GraphQL query to retrieve up to 100 pull requests from
         the specified repository, starting after the provided cursor. Returns
-        the issues in a DataFrame, along with the cursor for the next page and a
+        the pull requests in a DataFrame, along with the cursor for the next page and a
         boolean indicating if more pages exist.
 
         Args:
             after_cursor (str, optional): The pagination cursor to continue fetching
-                issues from. Use "null" to start from the beginning.
+                pull requests from. Use "null" to start from the beginning.
                 Defaults to "null".
 
         Returns:
             tuple[DataFrame, str, bool]:
-                - A DataFrame containing issue data (`id`, `createdAt`, `closedAt`).
+                - A DataFrame containing pull request data
+                    (`id`, `createdAt`, `closedAt`).
                 - A string representing the end cursor for pagination.
-                - A boolean indicating whether there are more pages of issues to fetch.
+                - A boolean indicating whether there are more pages of pull requests
+                    to fetch.
 
         """
         json_template: Template = Template(
             template="""query {
                 repository(name:"$name", owner:"$owner") {
-                    issues(first: 100, after: $cursor) {
+                    pullRequests(first: 100, after: $cursor) {
                         edges {
                             node {
                                 id,
@@ -161,33 +164,33 @@ class GitHubIssues:
             return (DataFrame(), "", False)
 
         page_info: dict[str, str | bool] = response.json()["data"]["repository"][
-            "issues"
+            "pullRequests"
         ]["pageInfo"]
 
         cursor: str = str(page_info["endCursor"])
         has_next_page: bool = bool(page_info["hasNextPage"])
 
         nodes: list[dict[str, dict[str, str]]] = response.json()["data"]["repository"][
-            "issues"
+            "pullRequests"
         ]["edges"]
 
-        issue_data: DataFrame = DataFrame(data=map(itemgetter("node"), nodes))
+        pull_request_data: DataFrame = DataFrame(data=map(itemgetter("node"), nodes))
 
-        issue_data = issue_data.rename(
+        pull_request_data = pull_request_data.rename(
             columns={
-                "id": "issue_id",
+                "id": "pull_request_id",
                 "createdAt": "created_at",
                 "closedAt": "closed_at",
             }
         )
 
-        issue_data["created_at"] = pd.to_datetime(
-            issue_data["created_at"],
+        pull_request_data["created_at"] = pd.to_datetime(
+            pull_request_data["created_at"],
             utc=True,
         )
-        issue_data["closed_at"] = pd.to_datetime(
-            issue_data["closed_at"],
+        pull_request_data["closed_at"] = pd.to_datetime(
+            pull_request_data["closed_at"],
             utc=True,
         )
 
-        return (issue_data, cursor, has_next_page)
+        return (pull_request_data, cursor, has_next_page)

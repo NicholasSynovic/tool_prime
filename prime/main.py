@@ -14,7 +14,6 @@ from typing import Any
 import pandas as pd
 from pandas import DataFrame, Interval, IntervalIndex, Timestamp
 from progress.bar import Bar
-
 from src.api.db import DB
 from src.api.issues import GitHubIssues
 from src.api.metrics import (

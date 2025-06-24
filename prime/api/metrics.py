@@ -6,23 +6,19 @@ Copyright (C) 2025 Nicholas M. Synovic.
 """
 
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from collections.abc import Iterator
 
 import pandas as pd
 from pandas import (
     DataFrame,
     Grouper,
-    Interval,
     IntervalIndex,
     Series,
     Timestamp,
 )
 from pandas.core.groupby import DataFrameGroupBy
 from progress.bar import Bar
-
 from src.api.size import SCC
-from src.api.types import Issues
 from src.api.vcs import VersionControlSystem
 
 
