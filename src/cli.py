@@ -327,10 +327,10 @@ class CLI:
 
     def issue_spoilage_subparser(self) -> ArgumentParser:
         issue_spoilage_parser: ArgumentParser = self.subparsers.add_parser(
-            name="id",
-            help="Compute issue density",
+            name="is",
+            help="Compute issue spoilage",
             description="The eighth stage of the metrics pipeline",
-            prog=f"{src.PROG} id",
+            prog=f"{src.PROG} is",
             epilog=src.EPILOG,
         )
 
@@ -340,7 +340,7 @@ class CLI:
             required=True,
             help="Path to SQLite3 database",
             type=Path,
-            dest="issue_density.output",
+            dest="issue_spoilage.output",
         )
 
         return issue_spoilage_parser
