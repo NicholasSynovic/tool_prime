@@ -40,6 +40,34 @@ def add_input_argument(
     )
 
 
+def add_gh_args(
+    parser: ArgumentParser,
+    dest_var: str,
+) -> None:
+    parser.add_argument(
+        "-a",
+        "--auth",
+        required=True,
+        help=prime.GH_AUTH_HELP,
+        type=str,
+        dest=f"{dest_var}.auth",
+    )
+    parser.add_argument(
+        "--owner",
+        required=True,
+        help=prime.GH_OWNER_HELP,
+        type=str,
+        dest=f"{dest_var}.owner",
+    )
+    parser.add_argument(
+        "--name",
+        required=True,
+        help=prime.GH_NAME_HELP,
+        type=str,
+        dest=f"{dest_var}.repo_name",
+    )
+
+
 class CLI:
     def __init__(self) -> None:
         self.parser: ArgumentParser = ArgumentParser(
@@ -148,28 +176,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        issue_parser.add_argument(
-            "-a",
-            "--auth",
-            required=True,
-            help="GitHub personal auth token",
-            type=str,
-            dest="issues.auth",
-        )
-        issue_parser.add_argument(
-            "--owner",
-            required=True,
-            help="Owner of a GitHub repository",
-            type=str,
-            dest="issues.owner",
-        )
-        issue_parser.add_argument(
-            "--repo-name",
-            required=True,
-            help="Name of a GitHub repository",
-            type=str,
-            dest="issues.repo_name",
-        )
+        add_gh_args(parser=issue_parser, dest_var="issues")
         add_output_argument(parser=issue_parser, dest_var="issues")
 
         return issue_parser
@@ -183,28 +190,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        pull_requests_parser.add_argument(
-            "-a",
-            "--auth",
-            required=True,
-            help="GitHub personal auth token",
-            type=str,
-            dest="pull_requests.auth",
-        )
-        pull_requests_parser.add_argument(
-            "--owner",
-            required=True,
-            help="Owner of a GitHub repository",
-            type=str,
-            dest="pull_requests.owner",
-        )
-        pull_requests_parser.add_argument(
-            "--repo-name",
-            required=True,
-            help="Name of a GitHub repository",
-            type=str,
-            dest="pull_requests.repo_name",
-        )
+        add_gh_args(parser=pull_requests_parser, dest_var="pull_requests")
         add_output_argument(
             parser=pull_requests_parser,
             dest_var="pull_requests",
