@@ -88,6 +88,14 @@ class T_BusFactorPerDay(BaseModel):
     delta_bytes: int = Field(default=..., description="Change in total number of bytes")
 
 
+class T_IssueSpoilagePerDay(BaseModel):
+    start: datetime = Field(default=..., description="Starting datetime")
+    end: datetime = Field(default=..., description="Ending datetime")
+    open_issues: int = Field(
+        default=..., description="Number of open issues in the period"
+    )
+
+
 class CommitHashes(BaseModel):
     """
     Represents a commit hash of a specific commit.

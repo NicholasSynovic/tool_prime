@@ -6,12 +6,13 @@ Copyright (C) 2025 Nicholas M. Synovic.
 """
 
 import sys
+from collections import defaultdict
 from math import ceil
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from pandas import DataFrame, Timestamp
+from pandas import DataFrame, Interval, IntervalIndex, Timestamp
 from progress.bar import Bar
 
 from src.api.db import DB
@@ -100,6 +101,8 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:  # no
             return DB(db_path=namespace["project_productivity.output"])
         case "bus_factor":
             return DB(db_path=namespace["bus_factor.output"])
+        case "issue_density":
+            return DB(db_path=namespace["issue_density.output"])
         case _:
             return None
 
@@ -418,6 +421,99 @@ def handle_bus_factor(db: DB) -> None:
     )
 
 
+# def handle_issue_spoilage(db: DB) -> None:
+#     # Replace this with code for issue spoilage
+
+#     current_day: Timestamp = Timestamp.utcnow().floor(freq="D")
+
+#     issues: DataFrame = db.read_table(table="issues", model=Issues)
+#     project_size_per_day: DataFrame = db.read_table(table="project_size_per_day", model=T_ProjectSizePerDay,)
+
+#     issues["created_at"] = issues["created_at"].apply(lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),)
+#     issues["closed_at"] = issues["closed_at"].apply(lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),)
+#     project_size_per_day["date"] = project_size_per_day["date"].apply(lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),)
+
+#     oldest_issue_timestamp: Timestamp = issues["created_at"].min()
+#     oldest_size_timestamp: Timestamp = project_size_per_day["date"].min()
+#     oldest_timestamp: Timestamp = min(oldest_size_timestamp, oldest_issue_timestamp,)
+
+#     interval_index: IntervalIndex = pd.interval_range(start=oldest_timestamp, end=current_day, freq="D",)
+
+#     data: DataFrame = DataFrame()
+#     data["date"] = interval_index.right
+#     data["size"] = 0
+#     data["size"] = project_size_per_day[project_size_per_day["date"] == data["date"]]
+#     print(data)
+
+
+def handle_issue_density(db: DB) -> None:
+    # Issue spoilage is the number of open issues on a given day
+    # We assume that all issues open at midnight 00:00 and close at 23:59
+    data: list[DataFrame] = []
+
+    # Get current day
+    current_date: Timestamp = Timestamp.utcnow().floor(freq="D")
+
+    # Get all valid dates from the VCS; issues can't be created before the
+    # project is created
+    sql: str = "SELECT id, date FROM project_size_per_day;"
+    vcs_dates: DataFrame = db.query_database(sql=sql)
+    vcs_dates["date"] = vcs_dates["date"].apply(
+        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
+    )
+    oldest_date: Timestamp = vcs_dates["date"].min()
+
+    # Create time intervals (00:00 -> 23:59:59)
+    daily_intervals: IntervalIndex = IntervalIndex.from_arrays(
+        left=pd.date_range(start=oldest_date, end=current_date, freq="D"),
+        right=pd.date_range(start=oldest_date, end=current_date, freq="D")
+        + pd.Timedelta(
+            hours=23,
+            minutes=59,
+            seconds=59,
+        ),
+        closed="both",
+    )
+
+    # Get issues and set created_at and closed_at to pandas.Timestamp
+    issues: DataFrame = db.read_table(table="issues", model=Issues)
+    issues["created_at"] = issues["created_at"].apply(
+        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
+    )
+    issues["closed_at"] = issues["closed_at"].apply(
+        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
+    )
+    issues["closed_at"] = issues["closed_at"].fillna(value=current_date)
+    issues["interval"] = issues.apply(
+        lambda row: pd.Interval(
+            left=row["created_at"], right=row["closed_at"], closed="both"
+        ),
+        axis=1,
+    )
+
+    with Bar(
+        "Computing issue spoilage per day...",
+        max=daily_intervals.shape[0],
+    ) as bar:
+        interval: Interval
+        for interval in daily_intervals:
+            datum: dict[str, list[Interval | int]] = defaultdict(list)
+            datum["start"].append(interval.left)
+            datum["end"].append(interval.right)
+            datum["open_issues"].append(
+                issues["interval"]
+                .apply(lambda x: x.left <= interval.left and x.right >= interval.right)
+                .sum()
+            )
+            data.append(DataFrame(data=datum))
+            bar.next()
+
+    print(pd.concat(objs=data, ignore_index=True))
+
+    # result = pd.DataFrame({'bin': time_intervals, 'count': counts})
+    # print(result)
+
+
 def main() -> None:
     """
     Execute the application based on command-line arguments.
@@ -437,7 +533,9 @@ def main() -> None:
         sys.exit(1)
 
     # Connect to database
-    db: DB = handle_db(namespace=namespace, namespace_key=namespace_key)
+    db: DB | None = handle_db(namespace=namespace, namespace_key=namespace_key)
+    if db is None:
+        sys.exit(2)
 
     # Run subroutines based on command line parser
     match namespace_key:
@@ -453,6 +551,8 @@ def main() -> None:
             handle_project_productivity(db=db)
         case "bus_factor":
             handle_bus_factor(db=db)
+        case "issue_density":
+            handle_issue_density(db=db)
         case _:
             sys.exit(3)
 

@@ -75,6 +75,9 @@ class CLI:
         # bf Subparser
         self.bus_factor_parser = self.bus_factor_subparser()
 
+        # id Subparser
+        self.issue_density_parser = self.issue_density_subparser()
+
     def vcs_subparser(self) -> ArgumentParser:
         """
         Define a subparser for parsing a project's version control system.
@@ -321,6 +324,26 @@ class CLI:
         )
 
         return bus_factor_parser
+
+    def issue_density_subparser(self) -> ArgumentParser:
+        issue_density_parser: ArgumentParser = self.subparsers.add_parser(
+            name="id",
+            help="Compute issue density",
+            description="The eighth stage of the metrics pipeline",
+            prog=f"{src.PROG} id",
+            epilog=src.EPILOG,
+        )
+
+        issue_density_parser.add_argument(
+            "-o",
+            "--output",
+            required=True,
+            help="Path to SQLite3 database",
+            type=Path,
+            dest="issue_density.output",
+        )
+
+        return issue_density_parser
 
     def parse_args(self) -> Namespace:
         """
