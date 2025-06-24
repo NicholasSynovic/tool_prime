@@ -96,6 +96,19 @@ class T_IssueSpoilagePerDay(BaseModel):
     )
 
 
+class T_IssueDensityPerDay(BaseModel):
+    start: datetime = Field(default=..., description="Starting datetime")
+    end: datetime = Field(default=..., description="Ending datetime")
+    open_issues: int = Field(
+        default=..., description="Number of open issues in the period"
+    )
+    lines: int = Field(default=..., description="Total number of lines")
+    code: int = Field(default=..., description="Total number of code lines")
+    comments: int = Field(default=..., description="Total number of comment lines")
+    blanks: int = Field(default=..., description="Total number of blank lines")
+    bytes: int = Field(default=..., description="Total number of bytes")
+
+
 class CommitHashes(BaseModel):
     """
     Represents a commit hash of a specific commit.

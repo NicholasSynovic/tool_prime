@@ -20,6 +20,7 @@ from src.api.issues import GitHubIssues
 from src.api.metrics import (
     BusFactorPerDay,
     FileSizePerCommit,
+    IssueDensityPerDay,
     IssueSpoilagePerDay,
     ProjectProductivityPerCommit,
     ProjectProductivityPerDay,
@@ -40,6 +41,7 @@ from src.api.types import (
     Releases,
     T_BusFactorPerDay,
     T_FileSizePerCommit,
+    T_IssueDensityPerDay,
     T_IssueSpoilagePerDay,
     T_ProjectProductivityPerCommit,
     T_ProjectProductivityPerDay,
@@ -507,15 +509,18 @@ def handle_issue_density(db: DB) -> None:
         lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
     )
 
-    data: DataFrame = issue_spoilage_per_day.merge(
-        project_size_per_day.rename(
-            columns={"date": "start"}
-        ),  # rename so merge key matches
-        on="start",
-        how="left",
-    ).ffill()
+    idpd: IssueDensityPerDay = IssueDensityPerDay(
+        issue_spoilage_per_day=issue_spoilage_per_day,
+        project_size_per_day=project_size_per_day,
+    )
+    idpd.compute()
 
-    print(data)
+    # Write metric to database
+    db.write_df(
+        df=idpd.computed_data,
+        table="issue_density_per_day",
+        model=T_IssueDensityPerDay,
+    )
 
 
 def main() -> None:

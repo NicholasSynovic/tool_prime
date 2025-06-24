@@ -262,6 +262,20 @@ class DB:
             Column("open_issues", Integer),
         )
 
+        _: Table = Table(
+            "issue_density_per_day",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("start", DateTime),
+            Column("end", DateTime),
+            Column("open_issues", Integer),
+            Column("lines", Integer),
+            Column("code", Integer),
+            Column("comments", Integer),
+            Column("blanks", Integer),
+            Column("bytes", Integer),
+        )
+
         self.metadata.create_all(bind=self.engine, checkfirst=True)
 
     def write_df(self, df: DataFrame, table: str, model: type[BaseModel]) -> bool:

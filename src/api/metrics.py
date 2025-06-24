@@ -221,3 +221,20 @@ class IssueSpoilagePerDay(Metric):
         self.computed_data = pd.DataFrame(
             {"start": daily_left, "end": daily_right, "open_issues": open_issues}
         )
+
+
+class IssueDensityPerDay(Metric):
+    def __init__(
+        self,
+        issue_spoilage_per_day: DataFrame,
+        project_size_per_day: DataFrame,
+    ) -> None:
+        super().__init__(input_data=issue_spoilage_per_day)
+        self.project_size_per_day: DataFrame = project_size_per_day
+
+    def compute(self) -> None:
+        self.computed_data = self.input_data.merge(
+            self.project_size_per_day.rename(columns={"date": "start"}),
+            on="start",
+            how="left",
+        ).ffill()
