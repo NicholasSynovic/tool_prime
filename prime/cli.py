@@ -12,14 +12,17 @@ from pathlib import Path
 import prime
 
 
-def add_output_argument(parser: ArgumentParser) -> None:
+def add_output_argument(
+    parser: ArgumentParser,
+    dest_var: str,
+) -> None:
     parser.add_argument(
         "-o",
         "--output",
         required=True,
         help=prime.OUTPUT_HELP,
         type=Path,
-        dest="vcs.output",
+        dest=f"{dest_var}.output",
     )
 
 
@@ -82,7 +85,7 @@ class CLI:
             type=Path,
             dest="vcs.input",
         )
-        add_output_argument(parser=vcs_parser)
+        add_output_argument(parser=vcs_parser, dest_var="vcs")
 
         return vcs_parser
 
@@ -103,7 +106,7 @@ class CLI:
             type=Path,
             dest="size.input",
         )
-        add_output_argument(parser=size_parser)
+        add_output_argument(parser=size_parser, dest_var="size")
 
         return size_parser
 
@@ -116,7 +119,9 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        add_output_argument(parser=project_productivity_parser)
+        add_output_argument(
+            parser=project_productivity_parser, dest_var="project_productivity"
+        )
 
         return project_productivity_parser
 
@@ -129,7 +134,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        add_output_argument(parser=bus_factor_parser)
+        add_output_argument(parser=bus_factor_parser, dest_var="bus_factor")
 
         return bus_factor_parser
 
@@ -164,7 +169,7 @@ class CLI:
             type=str,
             dest="issues.repo_name",
         )
-        add_output_argument(parser=issue_parser)
+        add_output_argument(parser=issue_parser, dest_var="issues")
 
         return issue_parser
 
@@ -199,7 +204,10 @@ class CLI:
             type=str,
             dest="pull_requests.repo_name",
         )
-        add_output_argument(parser=pull_requests_parser)
+        add_output_argument(
+            parser=pull_requests_parser,
+            dest_var="pull_requests",
+        )
 
         return pull_requests_parser
 
@@ -212,7 +220,10 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        add_output_argument(parser=issue_spoilage_parser)
+        add_output_argument(
+            parser=issue_spoilage_parser,
+            dest_var="issue_spoilage",
+        )
 
         return issue_spoilage_parser
 
@@ -225,7 +236,10 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        add_output_argument(parser=issue_density_parser)
+        add_output_argument(
+            parser=issue_density_parser,
+            dest_var="issue_density",
+        )
 
         return issue_density_parser
 
