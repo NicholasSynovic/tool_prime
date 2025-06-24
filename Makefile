@@ -1,6 +1,5 @@
 build:
 	git describe --tags --abbrev=0 | tail -n 1 | xargs -I % poetry version %
-	poetry version --short > src/_version
 	rm -rf dist/
 	poetry build
 	pip install dist/*.tar.gz

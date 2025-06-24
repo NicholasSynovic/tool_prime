@@ -9,7 +9,7 @@ import sys
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 from pathlib import Path
 
-import src
+import prime
 
 
 def get_version() -> str:
@@ -42,9 +42,9 @@ class CLI:
     def __init__(self) -> None:
         """Initialize the argument parser."""
         self.parser: ArgumentParser = ArgumentParser(
-            prog=src.PROG,
-            description=src.DESCRIPTION,
-            epilog=src.EPILOG,
+            prog=prime.PROG,
+            description=prime.DESCRIPTION,
+            epilog=prime.EPILOG,
         )
         self.parser.add_argument(
             "-v",
@@ -97,8 +97,8 @@ class CLI:
             name="vcs",
             help="Parse a project's version control system for project metadata",
             description="The first stage of the metrics pipeline",
-            prog=f"{src.PROG} vcs",
-            epilog=src.EPILOG,
+            prog=f"{prime.PROG} vcs",
+            epilog=prime.EPILOG,
         )
 
         vcs_parser.add_argument(
@@ -136,8 +136,8 @@ class CLI:
             name="size",
             help="Measure the size of repository by lines of code",
             description="The second stage of the metrics pipeline",
-            prog=f"{src.PROG} size",
-            epilog=src.EPILOG,
+            prog=f"{prime.PROG} size",
+            epilog=prime.EPILOG,
         )
 
         size_parser.add_argument(
@@ -175,8 +175,8 @@ class CLI:
             name="issues",
             help="Get issue metadata from a GitHub repository",
             description="The third stage of the metrics pipeline",
-            prog=f"{src.PROG} issues",
-            epilog=src.EPILOG,
+            prog=f"{prime.PROG} issues",
+            epilog=prime.EPILOG,
         )
 
         issue_parser.add_argument(
@@ -228,8 +228,8 @@ class CLI:
             name="pr",
             help="Get pull request metadata from a GitHub repository",
             description="The fourth stage of the metrics pipeline",
-            prog=f"{src.PROG} pr",
-            epilog=src.EPILOG,
+            prog=f"{prime.PROG} pr",
+            epilog=prime.EPILOG,
         )
 
         pull_requests_parser.add_argument(
@@ -281,8 +281,8 @@ class CLI:
             name="pp",
             help="Compute project productivity",
             description="The sixth stage of the metrics pipeline",
-            prog=f"{src.PROG} pp",
-            epilog=src.EPILOG,
+            prog=f"{prime.PROG} pp",
+            epilog=prime.EPILOG,
         )
 
         project_productivity_parser.add_argument(
@@ -313,8 +313,8 @@ class CLI:
             name="bf",
             help="Compute bus factor",
             description="The seventh stage of the metrics pipeline",
-            prog=f"{src.PROG} bf",
-            epilog=src.EPILOG,
+            prog=f"{prime.PROG} bf",
+            epilog=prime.EPILOG,
         )
 
         bus_factor_parser.add_argument(
@@ -333,8 +333,8 @@ class CLI:
             name="is",
             help="Compute issue spoilage",
             description="The eighth stage of the metrics pipeline",
-            prog=f"{src.PROG} is",
-            epilog=src.EPILOG,
+            prog=f"{prime.PROG} is",
+            epilog=prime.EPILOG,
         )
 
         issue_spoilage_parser.add_argument(
@@ -353,8 +353,8 @@ class CLI:
             name="id",
             help="Compute issue density",
             description="The eighth stage of the metrics pipeline",
-            prog=f"{src.PROG} id",
-            epilog=src.EPILOG,
+            prog=f"{prime.PROG} id",
+            epilog=prime.EPILOG,
         )
 
         issue_density_parser.add_argument(
