@@ -12,6 +12,17 @@ from pathlib import Path
 import prime
 
 
+def add_output_argument(parser: ArgumentParser) -> None:
+    parser.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help=prime.OUTPUT_HELP,
+        type=Path,
+        dest="vcs.output",
+    )
+
+
 class CLI:
     def __init__(self) -> None:
         self.parser: ArgumentParser = ArgumentParser(
@@ -71,14 +82,7 @@ class CLI:
             type=Path,
             dest="vcs.input",
         )
-        vcs_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help=prime.OUTPUT_HELP,
-            type=Path,
-            dest="vcs.output",
-        )
+        add_output_argument(parser=vcs_parser)
 
         return vcs_parser
 
@@ -99,14 +103,7 @@ class CLI:
             type=Path,
             dest="size.input",
         )
-        size_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help=prime.OUTPUT_HELP,
-            type=Path,
-            dest="size.output",
-        )
+        add_output_argument(parser=size_parser)
 
         return size_parser
 
@@ -119,14 +116,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        project_productivity_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help=prime.OUTPUT_HELP,
-            type=Path,
-            dest="project_productivity.output",
-        )
+        add_output_argument(parser=project_productivity_parser)
 
         return project_productivity_parser
 
@@ -139,14 +129,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        bus_factor_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help=prime.OUTPUT_HELP,
-            type=Path,
-            dest="bus_factor.output",
-        )
+        add_output_argument(parser=bus_factor_parser)
 
         return bus_factor_parser
 
@@ -181,14 +164,7 @@ class CLI:
             type=str,
             dest="issues.repo_name",
         )
-        issue_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help=prime.OUTPUT_HELP,
-            type=Path,
-            dest="issues.output",
-        )
+        add_output_argument(parser=issue_parser)
 
         return issue_parser
 
@@ -223,14 +199,7 @@ class CLI:
             type=str,
             dest="pull_requests.repo_name",
         )
-        pull_requests_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help=prime.OUTPUT_HELP,
-            type=Path,
-            dest="pull_requests.output",
-        )
+        add_output_argument(parser=pull_requests_parser)
 
         return pull_requests_parser
 
@@ -243,14 +212,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        issue_spoilage_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help=prime.OUTPUT_HELP,
-            type=Path,
-            dest="issue_spoilage.output",
-        )
+        add_output_argument(parser=issue_spoilage_parser)
 
         return issue_spoilage_parser
 
@@ -263,14 +225,7 @@ class CLI:
             epilog=prime.EPILOG,
         )
 
-        issue_density_parser.add_argument(
-            "-o",
-            "--output",
-            required=True,
-            help=prime.OUTPUT_HELP,
-            type=Path,
-            dest="issue_density.output",
-        )
+        add_output_argument(parser=issue_density_parser)
 
         return issue_density_parser
 
