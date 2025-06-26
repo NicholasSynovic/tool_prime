@@ -9,7 +9,6 @@ import sys
 from math import ceil
 from pathlib import Path
 from typing import Any
-from prime.api.metrics import Metric
 
 import pandas as pd
 from pandas import DataFrame, IntervalIndex, Timestamp
@@ -22,6 +21,7 @@ from prime.api.metrics import (
     FileSizePerCommit,
     IssueDensityPerDay,
     IssueSpoilagePerDay,
+    Metric,
     ProjectProductivityPerCommit,
     ProjectProductivityPerDay,
     ProjectSizePerCommit,
