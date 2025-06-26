@@ -51,7 +51,7 @@ class FileSizePerCommit(Metric):
     def preprocess(self) -> None:
         self.input_data = self.db.read_table(
             table="commit_hashes",
-            model=CommitHashes,
+            model=prime_types.CommitHashes,
         )
 
     def compute(self) -> None:
@@ -188,8 +188,14 @@ class ProjectSizePerDay(Metric):
 
 
 class ProjectProductivityPerCommit(Metric):
-    def __init__(self, project_size_per_commit: DataFrame) -> None:
-        super().__init__(input_data=project_size_per_commit)
+    def __init__(self, db: DB) -> None:
+        super().__init__(db=db)
+
+    def preprocess(self) -> None:
+        self.input_data = self.db.read_table(
+        table="project_size_per_commit",
+        model=prime_types.T_ProjectSizePerCommit,
+    )
 
     def compute(self) -> None:
         self.computed_data = self.input_data.diff().fillna(0)
@@ -198,6 +204,12 @@ class ProjectProductivityPerCommit(Metric):
 
         self.computed_data["commit_hash_id"] = self.input_data["commit_hash_id"]
 
+    def write(self) -> None:
+        self.db.write_df(
+            df=self.computed_data,
+            table="project_productivity_per_commit",
+            model=prime_types.T_ProjectProductivityPerCommit,
+        )
 
 class ProjectProductivityPerDay(Metric):
     def __init__(self, input_data: DataFrame) -> None:

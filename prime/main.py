@@ -81,12 +81,12 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
             return DB(db_path=namespace["filesize.output"])
         case "project_size":
             return DB(db_path=namespace["project_size.output"])
+        case "project_productivity":
+            return DB(db_path=namespace["project_productivity.output"])
         # case "issues":
         #     return DB(db_path=namespace["issues.output"])
         # case "pull_requests":
         #     return DB(db_path=namespace["pull_requests.output"])
-        # case "project_productivity":
-        #     return DB(db_path=namespace["project_productivity.output"])
         # case "bus_factor":
         #     return DB(db_path=namespace["bus_factor.output"])
         # case "issue_spoilage":
@@ -308,18 +308,11 @@ def handle_pull_requests(namespace: dict[str, Any], db: DB) -> None:
     db.write_df(df=pull_requests_data, table="pull_requests", model=PullRequests)
 
 
-def handle_project_productivity(db: DB) -> None:
-    # Get project size per commit
-    project_size_per_commit: DataFrame = db.read_table(
-        table="project_size_per_commit",
-        model=T_ProjectSizePerCommit,
-    )
-
-    # Compute project productivity per commit
-    pppc: ProjectProductivityPerCommit = ProjectProductivityPerCommit(
-        project_size_per_commit=project_size_per_commit
-    )
-    pppc.compute()
+def handle_project_productivity_per_commit(db: DB) -> None:
+    metric: ProjectProductivityPerCommit = ProjectProductivityPerCommit(db=db)
+    metric.preprocess()
+    metric.compute()
+    metric.write()
 
     # Project productivity per day requires datetimes of commits
     sql: str = "SELECT id, commit_hash_id, committed_datetime FROM commit_logs"
@@ -519,12 +512,13 @@ def main() -> None:
         case "project_size":
             handle_project_size_per_commit(db=db)
             handle_project_size_per_day(db=db)
+        case "project_productivity":
+            handle_project_productivity_per_commit(db=db)
+            handle_project_productivity_per_day(db=db)
         # case "issues":
         #     handle_issues(namespace=namespace, db=db)
         # case "pull_requests":
         #     handle_pull_requests(namespace=namespace, db=db)
-        # case "project_productivity":
-        #     handle_project_productivity(db=db)
         # case "bus_factor":
         #     handle_bus_factor(db=db)
         # case "issue_spoilage":
