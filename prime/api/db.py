@@ -110,6 +110,18 @@ class DB:
         )
 
         _: Table = Table(
+            "bus_factor_per_day",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("date", DateTime),
+            Column("delta_lines", Integer),
+            Column("delta_code", Integer),
+            Column("delta_comments", Integer),
+            Column("delta_blanks", Integer),
+            Column("delta_bytes", Integer),
+        )
+
+        _: Table = Table(
             "committers",
             self.metadata,
             Column("id", Integer, primary_key=True),

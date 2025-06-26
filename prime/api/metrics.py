@@ -340,7 +340,7 @@ class BusFactorPerDay(Metric):
     def write(self) -> None:
         self.db.write_df(
             df=self.computed_data,
-            table="bus_factor",
+            table="bus_factor_per_day",
             model=prime_types.T_BusFactorPerDay,
         )
 
