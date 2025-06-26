@@ -314,7 +314,8 @@ def handle_project_productivity_per_commit(db: DB) -> None:
     metric.compute()
     metric.write()
 
-def handle_project_productivity_per_day(db: DB) ->  None:
+
+def handle_project_productivity_per_day(db: DB) -> None:
     metric: ProjectProductivityPerDay = ProjectProductivityPerDay(db=db)
     metric.preprocess()
     metric.compute()

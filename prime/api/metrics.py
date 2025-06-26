@@ -193,9 +193,9 @@ class ProjectProductivityPerCommit(Metric):
 
     def preprocess(self) -> None:
         self.input_data = self.db.read_table(
-        table="project_size_per_commit",
-        model=prime_types.T_ProjectSizePerCommit,
-    )
+            table="project_size_per_commit",
+            model=prime_types.T_ProjectSizePerCommit,
+        )
 
     def compute(self) -> None:
         self.computed_data = self.input_data.diff().fillna(0)
@@ -210,6 +210,7 @@ class ProjectProductivityPerCommit(Metric):
             table="project_productivity_per_commit",
             model=prime_types.T_ProjectProductivityPerCommit,
         )
+
 
 class ProjectProductivityPerDay(Metric):
     def __init__(self, db: DB) -> None:
@@ -256,10 +257,10 @@ class ProjectProductivityPerDay(Metric):
 
     def write(self) -> None:
         self.db.write_df(
-        df=self.computed_data,
-        table="project_productivity_per_day",
-        model=prime_types.T_ProjectProductivityPerDay,
-    )
+            df=self.computed_data,
+            table="project_productivity_per_day",
+            model=prime_types.T_ProjectProductivityPerDay,
+        )
 
 
 class BusFactorPerDay(Metric):
