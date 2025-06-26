@@ -148,37 +148,20 @@ def handle_vcs(namespace: dict[str, Any], db: DB) -> bool:
     return True
 
 
-def handle_filesize(namespace: dict[str, Any], db: DB) -> bool:
+def handle_filesize(repo_path: Path, db: DB) -> bool:
     # Instantiate VCS class
-    vcs: VersionControlSystem | int = identify_vcs(
-        repo_path=namespace["filesize.input"],
-    )
+    vcs: VersionControlSystem | int = identify_vcs(repo_path=repo_path)
     if isinstance(vcs, int):
         return False
 
     # Instantiate SCC class
-    scc: SCC = SCC(directory=vcs.repo_path)
-
-    # Get commit hashes from the database to parse through
-    commit_hashes: DataFrame = db.read_table(
-        table="commit_hashes",
-        model=CommitHashes,
-    )
+    scc: SCC = SCC(directory=repo_path)
 
     # Compute size of each file per commit
-    fspc: FileSizePerCommit = FileSizePerCommit(
-        vcs=vcs,
-        scc=scc,
-        commit_hashes=commit_hashes,
-    )
+    fspc: FileSizePerCommit = FileSizePerCommit(vcs=vcs, scc=scc, db=db)
+    fspc.preprocess()
     fspc.compute()
-
-    # Write file size per commit to the database
-    db.write_df(
-        df=fspc.computed_data,
-        table="file_size_per_commit",
-        model=T_FileSizePerCommit,
-    )
+    fspc.write()
 
     return True
 
@@ -570,7 +553,7 @@ def main() -> None:
         case "vcs":
             handle_vcs(namespace=namespace, db=db)
         case "filesize":
-            handle_filesize(namespace=namespace, db=db)
+            handle_filesize(repo_path=namespace["filesize.input"], db=db)
         case "project_size":
             handle_project_size(db=db)
         # case "issues":

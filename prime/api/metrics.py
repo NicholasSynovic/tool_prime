@@ -20,29 +20,39 @@ from pandas import (
 from pandas.core.groupby import DataFrameGroupBy
 from progress.bar import Bar
 
+from prime.api.db import DB
 from prime.api.size import SCC
+from prime.api.types import CommitHashes, T_FileSizePerCommit
 from prime.api.vcs import VersionControlSystem
 
 
 class Metric(ABC):
-    def __init__(self, input_data: DataFrame) -> None:
-        self.input_data: DataFrame = input_data
+    def __init__(self, db: DB) -> None:
+        self.db: DB = db
+        self.input_data: DataFrame = DataFrame()
         self.computed_data: DataFrame = DataFrame()
 
     @abstractmethod
     def compute(self) -> None: ...
 
+    @abstractmethod
+    def preprocess(self) -> None: ...
+
+    @abstractmethod
+    def write(self) -> None: ...
+
 
 class FileSizePerCommit(Metric):
-    def __init__(
-        self,
-        vcs: VersionControlSystem,
-        scc: SCC,
-        commit_hashes: DataFrame,
-    ) -> None:
+    def __init__(self, vcs: VersionControlSystem, scc: SCC, db: DB) -> None:
+        super().__init__(db=db)
         self.scc: SCC = scc
         self.vcs: VersionControlSystem = vcs
-        super().__init__(input_data=commit_hashes)
+
+    def preprocess(self) -> None:
+        self.input_data = self.db.read_table(
+            table="commit_hashes",
+            model=CommitHashes,
+        )
 
     def compute(self) -> None:
         data: list[DataFrame] = []
@@ -69,6 +79,13 @@ class FileSizePerCommit(Metric):
 
         self.computed_data = pd.concat(objs=data, ignore_index=True)
         self.computed_data.columns = self.computed_data.columns.str.lower()
+
+    def write(self) -> None:
+        self.db.write_df(
+            df=self.computed_data,
+            table="file_size_per_commit",
+            model=T_FileSizePerCommit,
+        )
 
 
 class ProjectSizePerCommit(Metric):
