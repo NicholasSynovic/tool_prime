@@ -264,9 +264,34 @@ class ProjectProductivityPerDay(Metric):
 
 
 class BusFactorPerDay(Metric):
-    def __init__(self, input_data: DataFrame) -> None:
-        super().__init__(input_data=input_data)
+    def __init__(self, db: DB) -> None:
+        super().__init__(db=db)
         self.datum_list: list[DataFrame] = []
+
+    def preprocess(self) -> None:
+        sql: str = """
+        SELECT
+            p.id,
+            p.delta_lines,
+            p.delta_code,
+            p.delta_comments,
+            p.delta_blanks,
+            p.delta_bytes,
+            c.committer_id
+            c.committed_datetime,
+        FROM
+            project_productivity_per_commit p
+        JOIN
+            commit_logs c
+            ON p.commit_hash_id = c.commit_hash_id;
+        """
+
+        data: DataFrame = self.db.query_database(sql=sql)
+        data["committed_datetime"] = data["committed_datetime"].apply(
+            lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D")
+        )
+
+        self.input_data = data
 
     def compute(self) -> None:
         data_grouped_by_days: DataFrameGroupBy = self.input_data.groupby(
@@ -303,6 +328,13 @@ class BusFactorPerDay(Metric):
                 bar.next()
 
         self.computed_data = pd.concat(objs=self.datum_list, ignore_index=True)
+
+    def write(self) -> None:
+        self.db.write_df(
+            df=self.computed_data,
+            table="bus_factor",
+            model=prime_types.T_BusFactorPerDay,
+        )
 
 
 class IssueSpoilagePerDay(Metric):

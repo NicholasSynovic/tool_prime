@@ -323,38 +323,10 @@ def handle_project_productivity_per_day(db: DB) -> None:
 
 
 def handle_bus_factor(db: DB) -> None:
-    # Get project productivity per commit
-    project_productivity_per_commit: DataFrame = db.read_table(
-        table="project_productivity_per_commit",
-        model=T_ProjectProductivityPerCommit,
-    )
-
-    # Bus factor per day requires datetimes of commits and the committer id
-    sql: str = (
-        "SELECT id, commit_hash_id, committed_datetime, committer_id FROM commit_logs"
-    )
-    commit_datetimes: DataFrame = db.query_database(sql=sql)
-    commit_datetimes["committed_datetime"] = commit_datetimes[
-        "committed_datetime"
-    ].apply(lambda x: Timestamp(ts_input=x))
-
-    # Join commit datetimes with project size per commit
-    bfpd_input_data: DataFrame = project_productivity_per_commit.merge(
-        commit_datetimes[["commit_hash_id", "committed_datetime", "committer_id"]],
-        on="commit_hash_id",
-        how="left",
-    )
-    bfpd_input_data = bfpd_input_data.drop(columns="commit_hash_id")
-
-    bfpd: BusFactorPerDay = BusFactorPerDay(input_data=bfpd_input_data)
-    bfpd.compute()
-
-    # Write metric to database
-    db.write_df(
-        df=bfpd.computed_data,
-        table="bus_factor",
-        model=T_BusFactorPerDay,
-    )
+    metric: BusFactorPerDay = BusFactorPerDay(db=db)
+    metric.preprocess()
+    metric.compute()
+    metric.write()
 
 
 def handle_issue_spoilage(db: DB) -> None:
