@@ -197,7 +197,7 @@ class ProjectProductivityPerCommit(Metric):
         )
 
     def compute(self) -> None:
-        self.computed_data = self.input_data.diff().fillna(0)
+        self.computed_data = self.input_data.diff().fillna(0).abs()
         self.computed_data = self.computed_data.drop(columns="commit_hash_id")
         self.computed_data = self.computed_data.add_prefix(prefix="delta_")
 
@@ -238,19 +238,32 @@ class ProjectProductivityPerDay(Metric):
         self.input_data = data
 
     def compute(self) -> None:
+        # Get the oldest and current dates
+        oldest_date: Timestamp = self.input_data["committed_datetime"][0]
+        current_date: Timestamp = Timestamp.utcnow().floor(freq="D")
+
+        # Create a daily date range between oldest and current date
+        date_range: DatetimeIndex = pd.date_range(
+            start=oldest_date,
+            end=current_date,
+            freq="D",
+            tz="UTC",
+        )
+
+        # Group by days and compute productivity
         data_grouped_by_days: DataFrameGroupBy = self.input_data.groupby(
             by=Grouper(
                 key="committed_datetime",
                 freq="D",
             ),
         )
+        data = data_grouped_by_days.sum()
 
-        self.computed_data = data_grouped_by_days.sum()
-
-        self.computed_data["date"] = self.computed_data.index
-
-        self.computed_data = self.computed_data.drop(columns="commit_hash_id")
-        self.computed_data = self.computed_data.reset_index(drop=True)
+        # Reindex data to fit date range
+        self.computed_data = data.reindex(date_range)
+        self.computed_data.index.name = "date"
+        self.computed_data = self.computed_data.reset_index()
+        self.computed_data = self.computed_data.fillna(value=0)
 
     def write(self) -> None:
         self.db.write_df(
@@ -274,8 +287,8 @@ class BusFactorPerDay(Metric):
             p.delta_comments,
             p.delta_blanks,
             p.delta_bytes,
-            c.committer_id
-            c.committed_datetime,
+            c.committer_id,
+            c.committed_datetime
         FROM
             project_productivity_per_commit p
         JOIN
