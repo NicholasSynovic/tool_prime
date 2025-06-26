@@ -177,38 +177,9 @@ def handle_project_size_per_commit(db: DB) -> bool:
 
 
 def handle_project_size_per_day(db: DB) -> bool:
-    # Project size per day requires datetimes of commits
-    sql: str = "SELECT id, commit_hash_id, committed_datetime FROM commit_logs"
-    commit_datetimes: DataFrame = db.query_database(sql=sql)
-    commit_datetimes["committed_datetime"] = commit_datetimes[
-        "committed_datetime"
-    ].apply(lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"))
-
-    # Join commit datetimes with project size per commit
-    pspd_input_data: DataFrame = pspc.computed_data.copy()
-    pspd_input_data = pspd_input_data.merge(
-        commit_datetimes[["commit_hash_id", "committed_datetime"]],
-        on="commit_hash_id",
-        how="left",
-    )
-
-    # Drop duplicate datetimes except the last instance from the input data
-    pspd_input_data = pspd_input_data.drop(columns="commit_hash_id").drop_duplicates(
-        subset="committed_datetime",
-        keep="last",
-        ignore_index=True,
-    )
-
-    # Compute project size per day
-    pspd: ProjectSizePerDay = ProjectSizePerDay(input_data=pspd_input_data)
-    pspd.compute()
-
-    # Write metrics to the database
-    db.write_df(
-        df=pspd.computed_data,
-        table="project_size_per_day",
-        model=T_ProjectSizePerDay,
-    )
+    metric: ProjectSizePerDay = ProjectSizePerDay(db=db)
+    metric.preprocess()
+    metric.write()
 
     return True
 

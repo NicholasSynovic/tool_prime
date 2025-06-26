@@ -20,13 +20,9 @@ from pandas import (
 from pandas.core.groupby import DataFrameGroupBy
 from progress.bar import Bar
 
+import prime.api.types as prime_types
 from prime.api.db import DB
 from prime.api.size import SCC
-from prime.api.types import (
-    CommitHashes,
-    T_FileSizePerCommit,
-    T_ProjectSizePerCommit,
-)
 from prime.api.vcs import VersionControlSystem
 
 
@@ -88,7 +84,7 @@ class FileSizePerCommit(Metric):
         self.db.write_df(
             df=self.computed_data,
             table="file_size_per_commit",
-            model=T_FileSizePerCommit,
+            model=prime_types.T_FileSizePerCommit,
         )
 
 
@@ -99,7 +95,7 @@ class ProjectSizePerCommit(Metric):
     def preprocess(self) -> None:
         self.input_data = self.db.read_table(
             table="file_size_per_commit",
-            model=T_FileSizePerCommit,
+            model=prime_types.T_FileSizePerCommit,
         )
 
     def compute(self) -> None:
@@ -125,13 +121,41 @@ class ProjectSizePerCommit(Metric):
         self.db.write_df(
             df=self.computed_data,
             table="project_size_per_commit",
-            model=T_ProjectSizePerCommit,
+            model=prime_types.T_ProjectSizePerCommit,
         )
 
 
 class ProjectSizePerDay(Metric):
-    def __init__(self, input_data: DataFrame) -> None:
-        super().__init__(input_data=input_data)
+    def __init__(self, db: DB) -> None:
+        super().__init__(db=db)
+
+    def preprocess(self) -> None:
+        sql: str = """
+        SELECT
+            p.id,
+            p.delta_lines,
+            p.delta_code,
+            p.delta_comments,
+            p.delta_blanks,
+            p.delta_bytes,
+            c.committed_datetime
+        FROM
+            project_productivity_per_commit p
+        JOIN
+            commit_logs c
+            ON p.commit_hash_id = c.commit_hash_id;
+        """
+
+        data: DataFrame = self.db.query_database(sql=sql)
+        data["committed_datetime"] = data["committed_datetime"].apply(
+            lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D")
+        )
+
+        self.input_data = data.drop_duplicates(
+            subset="committed_datetime",
+            keep="last",
+            ignore_index=True,
+        )
 
     def compute(self) -> None:
         # Get the oldest and current dates
@@ -154,6 +178,13 @@ class ProjectSizePerDay(Metric):
 
         # Flood fill data
         self.computed_data = self.computed_data.ffill()
+
+    def write(self) -> None:
+        self.db.write_df(
+            df=self.computed_data,
+            table="project_size_per_day",
+            model=prime_types.T_ProjectSizePerDay,
+        )
 
 
 class ProjectProductivityPerCommit(Metric):
