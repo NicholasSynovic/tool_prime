@@ -148,7 +148,7 @@ def handle_vcs(namespace: dict[str, Any], db: DB) -> bool:
     return True
 
 
-def handle_filesize(repo_path: Path, db: DB) -> bool:
+def handle_filesize_per_commit(repo_path: Path, db: DB) -> bool:
     # Instantiate VCS class
     vcs: VersionControlSystem | int = identify_vcs(repo_path=repo_path)
     if isinstance(vcs, int):
@@ -158,34 +158,25 @@ def handle_filesize(repo_path: Path, db: DB) -> bool:
     scc: SCC = SCC(directory=repo_path)
 
     # Compute size of each file per commit
-    fspc: FileSizePerCommit = FileSizePerCommit(vcs=vcs, scc=scc, db=db)
-    fspc.preprocess()
-    fspc.compute()
-    fspc.write()
+    metric: FileSizePerCommit = FileSizePerCommit(vcs=vcs, scc=scc, db=db)
+    metric.preprocess()
+    metric.compute()
+    metric.write()
 
     return True
 
 
-def handle_project_size(db: DB) -> bool:
-    # Get file sizes per commit
-    file_size_per_commit: DataFrame = db.read_table(
-        table="file_size_per_commit",
-        model=T_FileSizePerCommit,
-    )
-
+def handle_project_size_per_commit(db: DB) -> bool:
     # Compute size of the project per commit
-    pspc: ProjectSizePerCommit = ProjectSizePerCommit(
-        file_sizes=file_size_per_commit,
-    )
-    pspc.compute()
+    metric: ProjectSizePerCommit = ProjectSizePerCommit(db=db)
+    metric.preprocess()
+    metric.compute()
+    metric.write()
 
-    # Write project size per commit to the database
-    db.write_df(
-        df=pspc.computed_data,
-        table="project_size_per_commit",
-        model=T_ProjectSizePerCommit,
-    )
+    return True
 
+
+def handle_project_size_per_day(db: DB) -> bool:
     # Project size per day requires datetimes of commits
     sql: str = "SELECT id, commit_hash_id, committed_datetime FROM commit_logs"
     commit_datetimes: DataFrame = db.query_database(sql=sql)
@@ -553,9 +544,10 @@ def main() -> None:
         case "vcs":
             handle_vcs(namespace=namespace, db=db)
         case "filesize":
-            handle_filesize(repo_path=namespace["filesize.input"], db=db)
+            handle_filesize_per_commit(repo_path=namespace["filesize.input"], db=db)
         case "project_size":
-            handle_project_size(db=db)
+            handle_project_size_per_commit(db=db)
+            handle_project_size_per_day(db=db)
         # case "issues":
         #     handle_issues(namespace=namespace, db=db)
         # case "pull_requests":

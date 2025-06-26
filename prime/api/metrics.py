@@ -22,7 +22,11 @@ from progress.bar import Bar
 
 from prime.api.db import DB
 from prime.api.size import SCC
-from prime.api.types import CommitHashes, T_FileSizePerCommit
+from prime.api.types import (
+    CommitHashes,
+    T_FileSizePerCommit,
+    T_ProjectSizePerCommit,
+)
 from prime.api.vcs import VersionControlSystem
 
 
@@ -89,8 +93,14 @@ class FileSizePerCommit(Metric):
 
 
 class ProjectSizePerCommit(Metric):
-    def __init__(self, file_sizes: DataFrame) -> None:
-        super().__init__(input_data=file_sizes)
+    def __init__(self, db: DB) -> None:
+        super().__init__(db=db)
+
+    def preprocess(self) -> None:
+        self.input_data = self.db.read_table(
+            table="file_size_per_commit",
+            model=T_FileSizePerCommit,
+        )
 
     def compute(self) -> None:
         # Group files by commit hash
@@ -110,6 +120,13 @@ class ProjectSizePerCommit(Metric):
 
         # Reset index
         self.computed_data = self.computed_data.reset_index(drop=True)
+
+    def write(self) -> None:
+        self.db.write_df(
+            df=self.computed_data,
+            table="project_size_per_commit",
+            model=T_ProjectSizePerCommit,
+        )
 
 
 class ProjectSizePerDay(Metric):
