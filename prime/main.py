@@ -77,20 +77,22 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
     match namespace_key:
         case "vcs":
             return DB(db_path=namespace["vcs.output"])
-        case "size":
-            return DB(db_path=namespace["size.output"])
-        case "issues":
-            return DB(db_path=namespace["issues.output"])
-        case "pull_requests":
-            return DB(db_path=namespace["pull_requests.output"])
-        case "project_productivity":
-            return DB(db_path=namespace["project_productivity.output"])
-        case "bus_factor":
-            return DB(db_path=namespace["bus_factor.output"])
-        case "issue_spoilage":
-            return DB(db_path=namespace["issue_spoilage.output"])
-        case "issue_density":
-            return DB(db_path=namespace["issue_density.output"])
+        case "filesize":
+            return DB(db_path=namespace["filesize.output"])
+        case "project_size":
+            return DB(db_path=namespace["project_size.output"])
+        # case "issues":
+        #     return DB(db_path=namespace["issues.output"])
+        # case "pull_requests":
+        #     return DB(db_path=namespace["pull_requests.output"])
+        # case "project_productivity":
+        #     return DB(db_path=namespace["project_productivity.output"])
+        # case "bus_factor":
+        #     return DB(db_path=namespace["bus_factor.output"])
+        # case "issue_spoilage":
+        #     return DB(db_path=namespace["issue_spoilage.output"])
+        # case "issue_density":
+        #     return DB(db_path=namespace["issue_density.output"])
         case _:
             return None
 
@@ -146,10 +148,10 @@ def handle_vcs(namespace: dict[str, Any], db: DB) -> bool:
     return True
 
 
-def handle_size(namespace: dict[str, Any], db: DB) -> bool:
+def handle_filesize(namespace: dict[str, Any], db: DB) -> bool:
     # Instantiate VCS class
     vcs: VersionControlSystem | int = identify_vcs(
-        repo_path=namespace["size.input"],
+        repo_path=namespace["filesize.input"],
     )
     if isinstance(vcs, int):
         return False
@@ -178,9 +180,19 @@ def handle_size(namespace: dict[str, Any], db: DB) -> bool:
         model=T_FileSizePerCommit,
     )
 
+    return True
+
+
+def handle_project_size(db: DB) -> bool:
+    # Get file sizes per commit
+    file_size_per_commit: DataFrame = db.read_table(
+        table="file_size_per_commit",
+        model=T_FileSizePerCommit,
+    )
+
     # Compute size of the project per commit
     pspc: ProjectSizePerCommit = ProjectSizePerCommit(
-        file_sizes=fspc.computed_data,
+        file_sizes=file_size_per_commit,
     )
     pspc.compute()
 
@@ -206,12 +218,18 @@ def handle_size(namespace: dict[str, Any], db: DB) -> bool:
         how="left",
     )
 
+    # Drop duplicate datetimes except the last instance from the input data
+    pspd_input_data = pspd_input_data.drop(columns="commit_hash_id").drop_duplicates(
+        subset="committed_datetime",
+        keep="last",
+        ignore_index=True,
+    )
+
     # Compute project size per day
     pspd: ProjectSizePerDay = ProjectSizePerDay(input_data=pspd_input_data)
     pspd.compute()
 
     # Write metrics to the database
-
     db.write_df(
         df=pspd.computed_data,
         table="project_size_per_day",
@@ -551,20 +569,22 @@ def main() -> None:
     match namespace_key:
         case "vcs":
             handle_vcs(namespace=namespace, db=db)
-        case "size":
-            handle_size(namespace=namespace, db=db)
-        case "issues":
-            handle_issues(namespace=namespace, db=db)
-        case "pull_requests":
-            handle_pull_requests(namespace=namespace, db=db)
-        case "project_productivity":
-            handle_project_productivity(db=db)
-        case "bus_factor":
-            handle_bus_factor(db=db)
-        case "issue_spoilage":
-            handle_issue_spoilage(db=db)
-        case "issue_density":
-            handle_issue_density(db=db)
+        case "filesize":
+            handle_filesize(namespace=namespace, db=db)
+        case "project_size":
+            handle_project_size(db=db)
+        # case "issues":
+        #     handle_issues(namespace=namespace, db=db)
+        # case "pull_requests":
+        #     handle_pull_requests(namespace=namespace, db=db)
+        # case "project_productivity":
+        #     handle_project_productivity(db=db)
+        # case "bus_factor":
+        #     handle_bus_factor(db=db)
+        # case "issue_spoilage":
+        #     handle_issue_spoilage(db=db)
+        # case "issue_density":
+        #     handle_issue_density(db=db)
         case _:
             sys.exit(3)
 

@@ -1,8 +1,8 @@
 build:
-	git describe --tags --abbrev=0 | tail -n 1 | xargs -I % poetry version %
+	git describe --tags --abbrev=0 | tail -n 1 | xargs -I % uv version %
 	rm -rf dist/
-	poetry build
-	pip install dist/*.tar.gz
+	uv build
+	uv pip install dist/*.tar.gz
 
 create-dev:
 	pre-commit install

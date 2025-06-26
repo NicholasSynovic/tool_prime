@@ -172,13 +172,14 @@ class CLI:
 
         # Initialize subparsers for different tasks
         self.vcs_subparser()
-        self.size_subparser()
-        self.project_productivity_subparser()
-        self.bus_factor_subparser()
-        self.pull_request_subparser()
-        self.issue_subparser()
-        self.issue_spoilage_subparser()
-        self.issue_density_subparser()
+        self.filesize_subparser()
+        self.project_size_subparser()
+        # self.project_productivity_subparser()
+        # self.bus_factor_subparser()
+        # self.pull_request_subparser()
+        # self.issue_subparser()
+        # self.issue_spoilage_subparser()
+        # self.issue_density_subparser()
 
     def vcs_subparser(self) -> ArgumentParser:
         """
@@ -201,26 +202,52 @@ class CLI:
 
         return vcs_parser
 
-    def size_subparser(self) -> ArgumentParser:
+    def filesize_subparser(self) -> ArgumentParser:
         """
         Add a subparser for measuring repository size by lines of code.
+
+        Measure a source code repository by the number of lines of code per
+        file per commit.
 
         Returns:
             ArgumentParser: The subparser for the 'size' command.
 
         """
-        size_parser: ArgumentParser = self.subparsers.add_parser(
-            name="size",
-            help="Measure the size of repository by lines of code",
+        filesize_parser: ArgumentParser = self.subparsers.add_parser(
+            name="filesize",
+            help="Measure the size of files by lines of code",
             description="Step 2",
-            prog=f"{prime.PROG} size",
+            prog=f"{prime.PROG} filesize",
             epilog=prime.EPILOG,
         )
 
-        add_input_argument(parser=size_parser, dest_var="size")
-        add_output_argument(parser=size_parser, dest_var="size")
+        add_input_argument(parser=filesize_parser, dest_var="filesize")
+        add_output_argument(parser=filesize_parser, dest_var="filesize")
 
-        return size_parser
+        return filesize_parser
+
+    def project_size_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for measuring project size.
+
+        Measure a source code repository by the number of lines of code per
+        commit.
+
+        Returns:
+            ArgumentParser: The subparser for the 'size' command.
+
+        """
+        project_size_parser: ArgumentParser = self.subparsers.add_parser(
+            name="project-size",
+            help="Measure the size of project by the lines of code",
+            description="Step 2",
+            prog=f"{prime.PROG} project-size",
+            epilog=prime.EPILOG,
+        )
+
+        add_output_argument(parser=project_size_parser, dest_var="project_size")
+
+        return project_size_parser
 
     def project_productivity_subparser(self) -> ArgumentParser:
         """

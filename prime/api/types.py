@@ -24,6 +24,24 @@ class T_FileSizePerCommit(BaseModel):
     commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
 
 
+class T_ProjectSizePerDay(BaseModel):
+    date: datetime = Field(default=..., description="Date of measurement")
+    lines: int = Field(default=..., description="Total number of lines")
+    code: int = Field(default=..., description="Total number of code lines")
+    comments: int = Field(default=..., description="Total number of comment lines")
+    blanks: int = Field(default=..., description="Total number of blank lines")
+    bytes: int = Field(default=..., description="Total number of bytes")
+
+
+class T_ProjectSizePerCommit(BaseModel):
+    lines: int = Field(default=..., description="Number of lines in the project")
+    code: int = Field(default=..., description="Number of lines of code")
+    comments: int = Field(default=..., description="Number of lines of comments")
+    blanks: int = Field(default=..., description="Number of blank lines")
+    bytes: int = Field(default=..., description="Number of bytes")
+    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
+
+
 class T_ProjectProductivityPerCommit(BaseModel):
     commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
     delta_lines: int = Field(default=..., description="Change in total number of lines")
@@ -52,24 +70,6 @@ class T_ProjectProductivityPerDay(BaseModel):
         default=..., description="Change in total number of blank lines"
     )
     delta_bytes: int = Field(default=..., description="Change in total number of bytes")
-
-
-class T_ProjectSizePerDay(BaseModel):
-    date: datetime = Field(default=..., description="Date of measurement")
-    lines: int = Field(default=..., description="Total number of lines")
-    code: int = Field(default=..., description="Total number of code lines")
-    comments: int = Field(default=..., description="Total number of comment lines")
-    blanks: int = Field(default=..., description="Total number of blank lines")
-    bytes: int = Field(default=..., description="Total number of bytes")
-
-
-class T_ProjectSizePerCommit(BaseModel):
-    lines: int = Field(default=..., description="Number of lines in the project")
-    code: int = Field(default=..., description="Number of lines of code")
-    comments: int = Field(default=..., description="Number of lines of comments")
-    blanks: int = Field(default=..., description="Number of blank lines")
-    bytes: int = Field(default=..., description="Number of bytes")
-    commit_hash_id: int = Field(default=..., description="Commit hash ID from database")
 
 
 class T_BusFactorPerDay(BaseModel):

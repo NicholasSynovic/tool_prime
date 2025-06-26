@@ -11,6 +11,7 @@ from collections.abc import Iterator
 import pandas as pd
 from pandas import (
     DataFrame,
+    DatetimeIndex,
     Grouper,
     IntervalIndex,
     Series,
@@ -70,6 +71,57 @@ class FileSizePerCommit(Metric):
         self.computed_data.columns = self.computed_data.columns.str.lower()
 
 
+class ProjectSizePerCommit(Metric):
+    def __init__(self, file_sizes: DataFrame) -> None:
+        super().__init__(input_data=file_sizes)
+
+    def compute(self) -> None:
+        # Group files by commit hash
+        commit_groups: DataFrameGroupBy = self.input_data.groupby(
+            by="commit_hash_id",
+        )
+
+        # Sum each column and convert floats to integers
+        self.computed_data = commit_groups.sum(numeric_only=True)
+        self.computed_data = self.computed_data.apply(
+            pd.to_numeric,
+            downcast="integer",
+        )
+
+        # Reestablish the commit_hash_id column
+        self.computed_data["commit_hash_id"] = self.computed_data.index
+
+        # Reset index
+        self.computed_data = self.computed_data.reset_index(drop=True)
+
+
+class ProjectSizePerDay(Metric):
+    def __init__(self, input_data: DataFrame) -> None:
+        super().__init__(input_data=input_data)
+
+    def compute(self) -> None:
+        # Get the oldest and current dates
+        oldest_date: Timestamp = self.input_data["committed_datetime"][0]
+        current_date: Timestamp = Timestamp.utcnow().floor(freq="D")
+
+        # Create a daily date range between oldest and current date
+        date_range: DatetimeIndex = pd.date_range(
+            start=oldest_date,
+            end=current_date,
+            freq="D",
+            tz="UTC",
+        )
+
+        # Reindex data to fit date range
+        self.computed_data = self.input_data.set_index(keys="committed_datetime")
+        self.computed_data = self.computed_data.reindex(date_range)
+        self.computed_data.index.name = "date"
+        self.computed_data = self.computed_data.reset_index()
+
+        # Flood fill data
+        self.computed_data = self.computed_data.ffill()
+
+
 class ProjectProductivityPerCommit(Metric):
     def __init__(self, project_size_per_commit: DataFrame) -> None:
         super().__init__(input_data=project_size_per_commit)
@@ -99,63 +151,6 @@ class ProjectProductivityPerDay(Metric):
         self.computed_data["date"] = self.computed_data.index
 
         self.computed_data = self.computed_data.drop(columns="commit_hash_id")
-        self.computed_data = self.computed_data.reset_index(drop=True)
-
-
-class ProjectSizePerDay(Metric):
-    def __init__(self, input_data: DataFrame) -> None:
-        super().__init__(input_data=input_data)
-
-    def compute(self) -> None:
-        # Group data by committed datetime
-        data_grouped_by_days: DataFrameGroupBy = self.input_data.groupby(
-            by=Grouper(
-                key="committed_datetime",
-                freq="D",
-            ),
-        )
-
-        # Get the most recent commit information per group
-        scratch_dataframe: DataFrame = data_grouped_by_days.nth[-1]
-        scratch_dataframe = scratch_dataframe.reset_index(drop=True)
-        scratch_dataframe["date"] = scratch_dataframe["committed_datetime"]
-        scratch_dataframe = scratch_dataframe.drop(
-            columns=[
-                "commit_hash_id",
-                "committed_datetime",
-            ]
-        )
-
-        # Fill in missing dates
-        date_fill_dataframe: DataFrame = scratch_dataframe.set_index(
-            keys="date",
-        )
-        date_fill_dataframe = date_fill_dataframe.resample(rule="D").ffill()
-
-        self.computed_data = date_fill_dataframe.reset_index()
-
-
-class ProjectSizePerCommit(Metric):
-    def __init__(self, file_sizes: DataFrame) -> None:
-        super().__init__(input_data=file_sizes)
-
-    def compute(self) -> None:
-        # Group files by commit hash
-        commit_groups: DataFrameGroupBy = self.input_data.groupby(
-            by="commit_hash_id",
-        )
-
-        # Sum each column and convert floats to integers
-        self.computed_data = commit_groups.sum(numeric_only=True)
-        self.computed_data = self.computed_data.apply(
-            pd.to_numeric,
-            downcast="integer",
-        )
-
-        # Reestablish the commit_hash_id column
-        self.computed_data["commit_hash_id"] = self.computed_data.index
-
-        # Reset index
         self.computed_data = self.computed_data.reset_index(drop=True)
 
 
