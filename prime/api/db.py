@@ -113,12 +113,17 @@ class DB:
             "bus_factor_per_day",
             self.metadata,
             Column("id", Integer, primary_key=True),
+            Column("committer_id", Integer),
             Column("date", DateTime),
             Column("delta_lines", Integer),
             Column("delta_code", Integer),
             Column("delta_comments", Integer),
             Column("delta_blanks", Integer),
             Column("delta_bytes", Integer),
+            ForeignKeyConstraint(
+                ["committer_id"],
+                ["committers.id"],
+            ),
         )
 
         _: Table = Table(
