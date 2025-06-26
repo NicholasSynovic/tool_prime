@@ -31,6 +31,7 @@ class Metric(ABC):
         self.db: DB = db
         self.input_data: DataFrame = DataFrame()
         self.computed_data: DataFrame = DataFrame()
+        self.to_utc_date = lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D")
 
     @abstractmethod
     def compute(self) -> None: ...
@@ -147,9 +148,7 @@ class ProjectSizePerDay(Metric):
         """
 
         data: DataFrame = self.db.query_database(sql=sql)
-        data["committed_datetime"] = data["committed_datetime"].apply(
-            lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D")
-        )
+        data["committed_datetime"] = data["committed_datetime"].apply(self.to_utc_date)
 
         self.input_data = data.drop_duplicates(
             subset="committed_datetime",
@@ -234,9 +233,7 @@ class ProjectProductivityPerDay(Metric):
         """
 
         data: DataFrame = self.db.query_database(sql=sql)
-        data["committed_datetime"] = data["committed_datetime"].apply(
-            lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D")
-        )
+        data["committed_datetime"] = data["committed_datetime"].apply(self.to_utc_date)
 
         self.input_data = data
 
@@ -287,9 +284,7 @@ class BusFactorPerDay(Metric):
         """
 
         data: DataFrame = self.db.query_database(sql=sql)
-        data["committed_datetime"] = data["committed_datetime"].apply(
-            lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D")
-        )
+        data["committed_datetime"] = data["committed_datetime"].apply(self.to_utc_date)
 
         self.input_data = data
 
@@ -338,13 +333,55 @@ class BusFactorPerDay(Metric):
 
 
 class IssueSpoilagePerDay(Metric):
-    def __init__(
-        self,
-        daily_intervals: IntervalIndex,
-        input_data: DataFrame,
-    ) -> None:
-        super().__init__(input_data=input_data)
-        self.daily_intervals: IntervalIndex = daily_intervals
+    def __init__(self, db: DB) -> None:
+        super().__init__(db=db)
+        self.daily_intervals: IntervalIndex = IntervalIndex.from_arrays(
+            left=[0],
+            right=[1],
+            closed="both",
+        )
+
+    def preprocess(self) -> None:
+        # Value to store temporary information
+        data: DataFrame = DataFrame()
+
+        # Get current date
+        current_date: Timestamp = Timestamp.utcnow().floor(freq="D")
+
+        # Get project start date
+        sql: str = "SELECT id, MIN(committed_datetime) as date FROM commit_logs;"
+        data = self.db.query_database(sql=sql)
+        data["committed_datetime"] = data["committed_datetime"].apply(self.to_utc_date)
+        project_start_date: Timestamp = data["committed_datetime"][0]
+
+        # Create daily time intervals from 00:00:00:00:00 -> 23:59:59
+        date_range: DatetimeIndex = pd.date_range(
+            start=project_start_date,
+            end=current_date,
+            freq="D",
+        )
+
+        self.daily_intervals = IntervalIndex.from_arrays(
+            left=date_range,
+            right=date_range + pd.Timedelta(hours=23, minutes=59, seconds=59),
+            closed="both",
+        )[0:-1]
+
+        # Get issues table
+        data = self.db.read_table(table="issues", model=prime_types.Issues)
+        data["created_at"] = data["created_at"].apply(self.to_utc_date)
+        data["closed_at"] = data["closed_at"].apply(self.to_utc_date)
+        data["closed_at"] = data["closed_at"].fillna(value=current_date)
+
+        # Create closed interval between created_at and closed_at
+        data["interval"] = data.apply(
+            lambda row: pd.Interval(
+                left=row["created_at"],
+                right=row["closed_at"],
+                closed="both",
+            ),
+            axis=1,
+        )
 
     def compute(self) -> None:
         # Extract left and right bounds from input intervals
@@ -367,6 +404,13 @@ class IssueSpoilagePerDay(Metric):
         # Construct result DataFrame
         self.computed_data = pd.DataFrame(
             {"start": daily_left, "end": daily_right, "open_issues": open_issues}
+        )
+
+    def write(self) -> None:
+        self.db.write_df(
+            df=self.computed_data,
+            table="issue_spoilage_per_day",
+            model=prime_types.T_IssueSpoilagePerDay,
         )
 
 
