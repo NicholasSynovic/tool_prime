@@ -9,6 +9,7 @@ import sys
 from math import ceil
 from pathlib import Path
 from typing import Any
+from prime.api.metrics import Metric
 
 import pandas as pd
 from pandas import DataFrame, IntervalIndex, Timestamp
@@ -38,9 +39,6 @@ from prime.api.types import (
     PullRequestIDs,
     PullRequests,
     Releases,
-    T_IssueDensityPerDay,
-    T_IssueSpoilagePerDay,
-    T_ProjectSizePerDay,
 )
 from prime.api.utils import (
     copy_dataframe_columns_to_dataframe,
@@ -51,24 +49,6 @@ from prime.cli import CLI, get_first_namespace_key
 
 
 def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
-    """
-    Handle database initialization based on the provided namespace key.
-
-    This function matches the `namespace_key` to predefined cases and
-    initializes a database object using the corresponding output path from the
-    `namespace` dictionary. If the `namespace_key` does not match any predefined
-    case, it returns None.
-
-    Args:
-        namespace (dict[str, Any]): The dictionary containing namespace keys and
-            values.
-        namespace_key (str): The key indicating which database path to use.
-
-    Returns:
-        DB | None: A DB object initialized with the appropriate path, or None if
-            the `namespace_key` does not match any case.
-
-    """
     match namespace_key:
         case "vcs":
             return DB(db_path=namespace["vcs.output"])
@@ -84,10 +64,10 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
             return DB(db_path=namespace["issues.output"])
         case "pull_requests":
             return DB(db_path=namespace["pull_requests.output"])
-        # case "issue_spoilage":
-        #     return DB(db_path=namespace["issue_spoilage.output"])
-        # case "issue_density":
-        #     return DB(db_path=namespace["issue_density.output"])
+        case "issue_spoilage":
+            return DB(db_path=namespace["issue_spoilage.output"])
+        case "issue_density":
+            return DB(db_path=namespace["issue_density.output"])
         case _:
             return None
 
@@ -143,7 +123,13 @@ def handle_vcs(namespace: dict[str, Any], db: DB) -> bool:
     return True
 
 
-def handle_filesize_per_commit(repo_path: Path, db: DB) -> bool:
+def handle_metric(metric: Metric) -> None:
+    metric.preprocess()
+    metric.compute()
+    metric.write()
+
+
+def handle_filesize_per_commit(repo_path: Path, db: DB) -> None | bool:
     # Instantiate VCS class
     vcs: VersionControlSystem | int = identify_vcs(repo_path=repo_path)
     if isinstance(vcs, int):
@@ -154,50 +140,7 @@ def handle_filesize_per_commit(repo_path: Path, db: DB) -> bool:
 
     # Compute size of each file per commit
     metric: FileSizePerCommit = FileSizePerCommit(vcs=vcs, scc=scc, db=db)
-    metric.preprocess()
-    metric.compute()
-    metric.write()
-
-    return True
-
-
-def handle_project_size_per_commit(db: DB) -> bool:
-    # Compute size of the project per commit
-    metric: ProjectSizePerCommit = ProjectSizePerCommit(db=db)
-    metric.preprocess()
-    metric.compute()
-    metric.write()
-
-    return True
-
-
-def handle_project_size_per_day(db: DB) -> bool:
-    metric: ProjectSizePerDay = ProjectSizePerDay(db=db)
-    metric.preprocess()
-    metric.write()
-
-    return True
-
-
-def handle_project_productivity_per_commit(db: DB) -> None:
-    metric: ProjectProductivityPerCommit = ProjectProductivityPerCommit(db=db)
-    metric.preprocess()
-    metric.compute()
-    metric.write()
-
-
-def handle_project_productivity_per_day(db: DB) -> None:
-    metric: ProjectProductivityPerDay = ProjectProductivityPerDay(db=db)
-    metric.preprocess()
-    metric.compute()
-    metric.write()
-
-
-def handle_bus_factor_per_day(db: DB) -> None:
-    metric: BusFactorPerDay = BusFactorPerDay(db=db)
-    metric.preprocess()
-    metric.compute()
-    metric.write()
+    handle_metric(metric=metric)
 
 
 def handle_issues(namespace: dict[str, Any], db: DB) -> None:
@@ -292,52 +235,6 @@ def handle_pull_requests(namespace: dict[str, Any], db: DB) -> None:
     db.write_df(df=pull_requests_data, table="pull_requests", model=PullRequests)
 
 
-def handle_issue_spoilage_per_day(db: DB) -> None:
-    metric: IssueSpoilagePerDay = IssueSpoilagePerDay(db=db)
-    metric.preprocess()
-    metric.compute()
-    metric.write()
-
-
-def handle_issue_density(db: DB) -> None:
-    # Get issue spoilage per day
-    issue_spoilage_per_day: DataFrame = db.read_table(
-        table="issue_spoilage_per_day",
-        model=T_IssueSpoilagePerDay,
-    )
-
-    # Get project size per day
-    project_size_per_day: DataFrame = db.read_table(
-        table="project_size_per_day",
-        model=T_ProjectSizePerDay,
-    )
-
-    # Set dates to be Timestamps
-    issue_spoilage_per_day["start"] = issue_spoilage_per_day["start"].apply(
-        lambda x: Timestamp(ts_input=x, tz="UTC"),
-    )
-    issue_spoilage_per_day["end"] = issue_spoilage_per_day["end"].apply(
-        lambda x: Timestamp(ts_input=x, tz="UTC"),
-    )
-
-    project_size_per_day["date"] = project_size_per_day["date"].apply(
-        lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D"),
-    )
-
-    idpd: IssueDensityPerDay = IssueDensityPerDay(
-        issue_spoilage_per_day=issue_spoilage_per_day,
-        project_size_per_day=project_size_per_day,
-    )
-    idpd.compute()
-
-    # Write metric to database
-    db.write_df(
-        df=idpd.computed_data,
-        table="issue_density_per_day",
-        model=T_IssueDensityPerDay,
-    )
-
-
 def main() -> None:
     """
     Execute the application based on command-line arguments.
@@ -368,21 +265,23 @@ def main() -> None:
         case "filesize":
             handle_filesize_per_commit(repo_path=namespace["filesize.input"], db=db)
         case "project_size":
-            handle_project_size_per_commit(db=db)
-            handle_project_size_per_day(db=db)
+            handle_metric(metric=ProjectSizePerCommit(db=db))
+            handle_metric(metric=ProjectSizePerDay(db=db))
         case "project_productivity":
-            handle_project_productivity_per_commit(db=db)
-            handle_project_productivity_per_day(db=db)
+            handle_metric(metric=ProjectProductivityPerCommit(db=db))
+            handle_metric(metric=ProjectProductivityPerDay(db=db))
         case "bus_factor":
-            handle_bus_factor_per_day(db=db)
+            handle_metric(metric=BusFactorPerDay(db=db))
         case "issues":
+            # TODO: Update this call to support generic calls to many DVCS
             handle_issues(namespace=namespace, db=db)
         case "pull_requests":
+            # TODO: Update this call to support generic calls to many DVCS
             handle_pull_requests(namespace=namespace, db=db)
         case "issue_spoilage":
-            handle_issue_spoilage_per_day(db=db)
-        # case "issue_density":
-        #     handle_issue_density_per_day(db=db)
+            handle_metric(metric=IssueSpoilagePerDay(db=db))
+        case "issue_density":
+            handle_metric(metric=IssueDensityPerDay(db=db))
         case _:
             sys.exit(3)
 

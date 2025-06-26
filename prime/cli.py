@@ -174,12 +174,12 @@ class CLI:
         self.vcs_subparser()
         self.filesize_subparser()
         self.project_size_subparser()
-        # self.project_productivity_subparser()
-        # self.bus_factor_subparser()
-        # self.pull_request_subparser()
-        # self.issue_subparser()
-        # self.issue_spoilage_subparser()
-        # self.issue_density_subparser()
+        self.project_productivity_subparser()
+        self.bus_factor_subparser()
+        self.issue_subparser()
+        self.pull_request_subparser()
+        self.issue_spoilage_subparser()
+        self.issue_density_subparser()
 
     def vcs_subparser(self) -> ArgumentParser:
         """

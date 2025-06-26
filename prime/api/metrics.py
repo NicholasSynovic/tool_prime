@@ -415,17 +415,50 @@ class IssueSpoilagePerDay(Metric):
 
 
 class IssueDensityPerDay(Metric):
-    def __init__(
-        self,
-        issue_spoilage_per_day: DataFrame,
-        project_size_per_day: DataFrame,
-    ) -> None:
-        super().__init__(input_data=issue_spoilage_per_day)
-        self.project_size_per_day: DataFrame = project_size_per_day
+    def __init__(self, db: DB) -> None:
+        super().__init__(db=db)
+        self.issue_spoilage_per_day: DataFrame = DataFrame()
+
+    def preprocess(self) -> None:
+        # Value to store temporary information
+        data: DataFrame = DataFrame()
+
+        # Get issue spoilage per day
+        data = self.db.read_table(
+            table="issue_spoilage_per_day",
+            model=prime_types.T_IssueSpoilagePerDay,
+        )
+
+        # Set values to be Timestamps
+        data["start"] = data["start"].apply(self.to_utc_date)
+        data["end"] = data["end"].apply(self.to_utc_date)
+
+        self.issue_spoilage_per_day = data
+
+        # Get project size per day
+        data: DataFrame = self.db.read_table(
+            table="project_size_per_day",
+            model=prime_types.T_ProjectSizePerDay,
+        )
+
+        data = data.rename(columns={"date": "start"})
+
+        # Set values to be Timestamps
+        data["start"] = data["start"].apply(self.to_utc_date)
+        data["end"] = data["end"].apply(self.to_utc_date)
+
+        self.input_data = data
 
     def compute(self) -> None:
         self.computed_data = self.input_data.merge(
-            self.project_size_per_day.rename(columns={"date": "start"}),
+            self.issue_spoilage_per_day,
             on="start",
             how="left",
         ).ffill()
+
+    def write(self) -> None:
+        self.db.write_df(
+            df=self.computed_data,
+            table="issue_density_per_day",
+            model=prime_types.T_IssueDensityPerDay,
+        )
