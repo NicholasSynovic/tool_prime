@@ -133,14 +133,14 @@ class ProjectSizePerDay(Metric):
         sql: str = """
         SELECT
             p.id,
-            p.delta_lines,
-            p.delta_code,
-            p.delta_comments,
-            p.delta_blanks,
-            p.delta_bytes,
+            p.lines,
+            p.code,
+            p.comments,
+            p.blanks,
+            p.bytes,
             c.committed_datetime
         FROM
-            project_productivity_per_commit p
+            project_size_per_commit p
         JOIN
             commit_logs c
             ON p.commit_hash_id = c.commit_hash_id;
@@ -212,8 +212,32 @@ class ProjectProductivityPerCommit(Metric):
         )
 
 class ProjectProductivityPerDay(Metric):
-    def __init__(self, input_data: DataFrame) -> None:
-        super().__init__(input_data=input_data)
+    def __init__(self, db: DB) -> None:
+        super().__init__(db=db)
+
+    def preprocess(self) -> None:
+        sql: str = """
+        SELECT
+            p.id,
+            p.delta_lines,
+            p.delta_code,
+            p.delta_comments,
+            p.delta_blanks,
+            p.delta_bytes,
+            c.committed_datetime
+        FROM
+            project_productivity_per_commit p
+        JOIN
+            commit_logs c
+            ON p.commit_hash_id = c.commit_hash_id;
+        """
+
+        data: DataFrame = self.db.query_database(sql=sql)
+        data["committed_datetime"] = data["committed_datetime"].apply(
+            lambda x: Timestamp(ts_input=x, tz="UTC").floor(freq="D")
+        )
+
+        self.input_data = data
 
     def compute(self) -> None:
         data_grouped_by_days: DataFrameGroupBy = self.input_data.groupby(
@@ -229,6 +253,13 @@ class ProjectProductivityPerDay(Metric):
 
         self.computed_data = self.computed_data.drop(columns="commit_hash_id")
         self.computed_data = self.computed_data.reset_index(drop=True)
+
+    def write(self) -> None:
+        self.db.write_df(
+        df=self.computed_data,
+        table="project_productivity_per_day",
+        model=prime_types.T_ProjectProductivityPerDay,
+    )
 
 
 class BusFactorPerDay(Metric):

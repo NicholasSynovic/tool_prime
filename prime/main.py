@@ -314,39 +314,11 @@ def handle_project_productivity_per_commit(db: DB) -> None:
     metric.compute()
     metric.write()
 
-    # Project productivity per day requires datetimes of commits
-    sql: str = "SELECT id, commit_hash_id, committed_datetime FROM commit_logs"
-    commit_datetimes: DataFrame = db.query_database(sql=sql)
-    commit_datetimes["committed_datetime"] = commit_datetimes[
-        "committed_datetime"
-    ].apply(lambda x: Timestamp(ts_input=x))
-
-    # Join commit datetimes with project size per commit
-    pppd_input_data: DataFrame = pppc.computed_data.copy()
-    pppd_input_data = pppd_input_data.merge(
-        commit_datetimes[["commit_hash_id", "committed_datetime"]],
-        on="commit_hash_id",
-        how="left",
-    )
-
-    # Compute project productivity per day
-    pppd: ProjectProductivityPerDay = ProjectProductivityPerDay(
-        input_data=pppd_input_data,
-    )
-    pppd.compute()
-
-    # Write metrics to the database
-    db.write_df(
-        df=pppc.computed_data,
-        table="project_productivity_per_commit",
-        model=T_ProjectProductivityPerCommit,
-    )
-
-    db.write_df(
-        df=pppd.computed_data,
-        table="project_productivity_per_day",
-        model=T_ProjectProductivityPerDay,
-    )
+def handle_project_productivity_per_day(db: DB) ->  None:
+    metric: ProjectProductivityPerDay = ProjectProductivityPerDay(db=db)
+    metric.preprocess()
+    metric.compute()
+    metric.write()
 
 
 def handle_bus_factor(db: DB) -> None:
