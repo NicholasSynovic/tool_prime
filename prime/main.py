@@ -20,7 +20,7 @@ from prime.api.metrics import (
     BusFactorPerDay,
     FileSizePerCommit,
     IssueDensityPerDay,
-    IssueSpoilagePerDay,
+    SpoilagePerDay,
     Metric,
     ProjectProductivityPerCommit,
     ProjectProductivityPerDay,
@@ -62,12 +62,14 @@ def handle_db(namespace: dict[str, Any], namespace_key: str) -> DB | None:
             return DB(db_path=namespace["bus_factor.output"])
         case "issues":
             return DB(db_path=namespace["issues.output"])
-        case "pull_requests":
-            return DB(db_path=namespace["pull_requests.output"])
         case "issue_spoilage":
             return DB(db_path=namespace["issue_spoilage.output"])
         case "issue_density":
             return DB(db_path=namespace["issue_density.output"])
+        case "pull_requests":
+            return DB(db_path=namespace["pull_requests.output"])
+        case "pull_request_spoilage":
+            return DB(db_path=namespace["pull_requests_spoilage.output"])
         case _:
             return None
 
@@ -275,13 +277,15 @@ def main() -> None:
         case "issues":
             # TODO: Update this call to support generic calls to many DVCS
             handle_issues(namespace=namespace, db=db)
+        case "issue_spoilage":
+            handle_metric(metric=SpoilagePerDay(db=db, table_name="issues"))
+        case "issue_density":
+            handle_metric(metric=IssueDensityPerDay(db=db))
         case "pull_requests":
             # TODO: Update this call to support generic calls to many DVCS
             handle_pull_requests(namespace=namespace, db=db)
-        case "issue_spoilage":
-            handle_metric(metric=IssueSpoilagePerDay(db=db))
-        case "issue_density":
-            handle_metric(metric=IssueDensityPerDay(db=db))
+        case "pull_request_spoilage":
+            handle_metric(metric=SpoilagePerDay(db=db, table_name="pull_requests"),)
         case _:
             sys.exit(3)
 

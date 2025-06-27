@@ -276,7 +276,16 @@ class DB:
             Column("id", Integer, primary_key=True),
             Column("start", DateTime),
             Column("end", DateTime),
-            Column("open_issues", Integer),
+            Column("open_events", Integer),
+        )
+
+        _: Table = Table(
+            "pull_request_spoilage_per_day",
+            self.metadata,
+            Column("id", Integer, primary_key=True),
+            Column("start", DateTime),
+            Column("end", DateTime),
+            Column("open_events", Integer),
         )
 
         _: Table = Table(

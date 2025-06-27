@@ -24,6 +24,7 @@ import prime.api.types as prime_types
 from prime.api.db import DB
 from prime.api.size import SCC
 from prime.api.vcs import VersionControlSystem
+from typing import Literal
 
 
 class Metric(ABC):
@@ -345,14 +346,28 @@ class BusFactorPerDay(Metric):
         )
 
 
-class IssueSpoilagePerDay(Metric):
-    def __init__(self, db: DB) -> None:
+class SpoilagePerDay(Metric):
+    def __init__(self, db: DB, table_name: Literal["issues", "pull_requests"],) -> None:
         super().__init__(db=db)
+        self.output_table_name: str = ""
+        self.input_table_name = table_name
         self.daily_intervals: IntervalIndex = IntervalIndex.from_arrays(
             left=[0],
             right=[1],
             closed="both",
         )
+
+        self.input_model: type[prime_types.Issues | prime_types.PullRequests]
+        self.output_model: type[prime_types.T_IssueSpoilagePerDay | prime_types.T_PullRequestSpoilagePerDay]
+        if self.input_table_name == "issues":
+            self.output_table_name = "issue_spoilage_per_day"
+            self.input_model = prime_types.Issues
+            self.output_model = prime_types.T_IssueSpoilagePerDay
+
+        else:
+            self.output_table_name = "pull_request_spoilage_per_day"
+            self.input_model = prime_types.PullRequests
+            self.output_model = prime_types.T_PullRequestSpoilagePerDay
 
     def preprocess(self) -> None:
         # Value to store temporary information
@@ -380,8 +395,8 @@ class IssueSpoilagePerDay(Metric):
             closed="both",
         )[0:-1]
 
-        # Get issues table
-        data = self.db.read_table(table="issues", model=prime_types.Issues)
+        # Get table
+        data = self.db.read_table(table=self.input_table_name, model=self.input_model,)
         data["created_at"] = data["created_at"].apply(self.to_utc_date)
         data["closed_at"] = data["closed_at"].apply(self.to_utc_date)
         data["closed_at"] = data["closed_at"].fillna(value=current_date)
@@ -412,18 +427,18 @@ class IssueSpoilagePerDay(Metric):
         )
 
         # Count how many input intervals cover each daily interval
-        open_issues = covers.sum(axis=1)
+        open_events = covers.sum(axis=1)
 
         # Construct result DataFrame
         self.computed_data = pd.DataFrame(
-            {"start": daily_left, "end": daily_right, "open_issues": open_issues}
+            {"start": daily_left, "end": daily_right, "open_events": open_events}
         )
 
     def write(self) -> None:
         self.db.write_df(
             df=self.computed_data,
-            table="issue_spoilage_per_day",
-            model=prime_types.T_IssueSpoilagePerDay,
+            table=self.output_table_name,
+            model=self.output_model,
         )
 
 

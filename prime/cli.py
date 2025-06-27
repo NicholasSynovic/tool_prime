@@ -170,6 +170,7 @@ class CLI:
         self.issue_spoilage_subparser()
         self.issue_density_subparser()
         self.pull_request_subparser()
+        self.pull_request_spoilage_subparser()
 
     def vcs_subparser(self) -> ArgumentParser:
         """
@@ -373,6 +374,30 @@ class CLI:
         )
 
         return pull_requests_parser
+
+    def pull_request_spoilage_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for computing pull request spoilage.
+
+        Returns:
+            ArgumentParser: The subparser for the 'pull-request-spoilage'
+                command.
+
+        """
+        pull_request_spoilage_parser: ArgumentParser = self.subparsers.add_parser(
+            name="pull-request-spoilage",
+            help="Compute pull request spoilage",
+            description="Step 10",
+            prog=f"{prime.PROG} pull-request-spoilage",
+            epilog=prime.EPILOG,
+        )
+
+        add_output_argument(
+            parser=pull_request_spoilage_parser,
+            dest_var="pull-request-spoilage",
+        )
+
+        return pull_request_spoilage_parser
 
     def parse_args(self) -> Namespace:
         """
