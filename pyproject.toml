@@ -1,6 +1,6 @@
 [project]
 name = "prime"
-version = "1.0"
+version = "1.0.1"
 description = "PRocess Internal MEtrics tools (PRIME)"
 authors = [{ name = "Nicholas M. Synovic", email = "nicholas.synovic@gmail.com" }]
 requires-python = "~=3.13"
