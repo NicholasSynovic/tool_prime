@@ -294,7 +294,7 @@ class DB:
             Column("id", Integer, primary_key=True),
             Column("start", DateTime),
             Column("end", DateTime),
-            Column("open_issues", Integer),
+            Column("open_events", Integer),
             Column("lines", Integer),
             Column("code", Integer),
             Column("comments", Integer),

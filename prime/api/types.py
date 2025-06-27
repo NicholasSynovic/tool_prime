@@ -107,7 +107,7 @@ class T_PullRequestSpoilagePerDay(BaseModel):
 class T_IssueDensityPerDay(BaseModel):
     start: datetime = Field(default=..., description="Starting datetime")
     end: datetime = Field(default=..., description="Ending datetime")
-    open_issues: int = Field(
+    open_events: int = Field(
         default=..., description="Number of open issues in the period"
     )
     lines: int = Field(default=..., description="Total number of lines")

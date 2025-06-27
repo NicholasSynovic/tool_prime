@@ -385,8 +385,8 @@ class SpoilagePerDay(Metric):
         # Get project start date
         sql: str = "SELECT id, MIN(committed_datetime) as date FROM commit_logs;"
         data = self.db.query_database(sql=sql)
-        data["committed_datetime"] = data["committed_datetime"].apply(self.to_utc_date)
-        project_start_date: Timestamp = data["committed_datetime"][0]
+        data["date"] = data["date"].apply(self.to_utc_date)
+        project_start_date: Timestamp = data["date"][0]
 
         # Create daily time intervals from 00:00:00:00:00 -> 23:59:59
         date_range: DatetimeIndex = pd.date_range(
@@ -419,6 +419,8 @@ class SpoilagePerDay(Metric):
             ),
             axis=1,
         )
+
+        self.input_data = data
 
     def compute(self) -> None:
         # Extract left and right bounds from input intervals
@@ -482,7 +484,6 @@ class IssueDensityPerDay(Metric):
 
         # Set values to be Timestamps
         data["start"] = data["start"].apply(self.to_utc_date)
-        data["end"] = data["end"].apply(self.to_utc_date)
 
         self.input_data = data
 
