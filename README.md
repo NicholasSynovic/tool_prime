@@ -364,6 +364,9 @@ Read the original research paper here: https://doi.org/10.1145/3551349.3559517
 
 ### Leveraging PRIME SQLite3 Database
 
+The schema for the SQLite3 database PRIME uses to store information is
+visualized at [docs/imgs/db_diagram.png](docs/imgs/db_diagram.png).
+
 ## Contributing To PRIME
 
 ### Submitting Issues
