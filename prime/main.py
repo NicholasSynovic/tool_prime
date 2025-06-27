@@ -20,12 +20,12 @@ from prime.api.metrics import (
     BusFactorPerDay,
     FileSizePerCommit,
     IssueDensityPerDay,
-    SpoilagePerDay,
     Metric,
     ProjectProductivityPerCommit,
     ProjectProductivityPerDay,
     ProjectSizePerCommit,
     ProjectSizePerDay,
+    SpoilagePerDay,
 )
 from prime.api.pull_requests import GitHubPullRequests
 from prime.api.size import SCC
@@ -285,7 +285,9 @@ def main() -> None:
             # TODO: Update this call to support generic calls to many DVCS
             handle_pull_requests(namespace=namespace, db=db)
         case "pull_request_spoilage":
-            handle_metric(metric=SpoilagePerDay(db=db, table_name="pull_requests"),)
+            handle_metric(
+                metric=SpoilagePerDay(db=db, table_name="pull_requests"),
+            )
         case _:
             sys.exit(3)
 

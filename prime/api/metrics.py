@@ -7,6 +7,7 @@ Copyright (C) 2025 Nicholas M. Synovic.
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
+from typing import Literal
 
 import pandas as pd
 from pandas import (
@@ -24,7 +25,6 @@ import prime.api.types as prime_types
 from prime.api.db import DB
 from prime.api.size import SCC
 from prime.api.vcs import VersionControlSystem
-from typing import Literal
 
 
 class Metric(ABC):
@@ -347,7 +347,11 @@ class BusFactorPerDay(Metric):
 
 
 class SpoilagePerDay(Metric):
-    def __init__(self, db: DB, table_name: Literal["issues", "pull_requests"],) -> None:
+    def __init__(
+        self,
+        db: DB,
+        table_name: Literal["issues", "pull_requests"],
+    ) -> None:
         super().__init__(db=db)
         self.output_table_name: str = ""
         self.input_table_name = table_name
@@ -358,7 +362,9 @@ class SpoilagePerDay(Metric):
         )
 
         self.input_model: type[prime_types.Issues | prime_types.PullRequests]
-        self.output_model: type[prime_types.T_IssueSpoilagePerDay | prime_types.T_PullRequestSpoilagePerDay]
+        self.output_model: type[
+            prime_types.T_IssueSpoilagePerDay | prime_types.T_PullRequestSpoilagePerDay
+        ]
         if self.input_table_name == "issues":
             self.output_table_name = "issue_spoilage_per_day"
             self.input_model = prime_types.Issues
@@ -396,7 +402,10 @@ class SpoilagePerDay(Metric):
         )[0:-1]
 
         # Get table
-        data = self.db.read_table(table=self.input_table_name, model=self.input_model,)
+        data = self.db.read_table(
+            table=self.input_table_name,
+            model=self.input_model,
+        )
         data["created_at"] = data["created_at"].apply(self.to_utc_date)
         data["closed_at"] = data["closed_at"].apply(self.to_utc_date)
         data["closed_at"] = data["closed_at"].fillna(value=current_date)
