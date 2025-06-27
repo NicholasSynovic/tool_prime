@@ -3,3 +3,9 @@ build:
 	rm -rf dist/
 	uv build
 	uv pip install dist/*.tar.gz
+
+create-dev:
+	pre-commit install
+	pre-commit autoupdate
+	uv sync
+	uv build
