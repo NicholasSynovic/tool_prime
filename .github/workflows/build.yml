@@ -28,13 +28,11 @@ jobs:
 
       - name: Build the project
         run: |
-          pip install pre-commit
+          pip install pre-commit uv
           make create-dev
-          source env/bin/activate
           make build
-          make package
 
       - name: Release the project
         uses: softprops/action-gh-release@v2
         with:
-          files: ./dist/src
+          files: ./dist/*
