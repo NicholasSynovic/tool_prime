@@ -1,10 +1,10 @@
-# PRIME: PRocess Internal MEtrics
+# PRIME - PRocess Internal MEtrics
 
 > A rewrite of the PRocess Internal MEtrics tools (PRIME)
 
 ## Table of Contents
 
-- [PRIME: PRocess Internal MEtrics](#prime-process-internal-metrics)
+- [PRIME - PRocess Internal MEtrics](#prime---process-internal-metrics)
   - [Table of Contents](#table-of-contents)
   - [About](#about)
     - [What Are "Process Metrics"?](#what-are-process-metrics)
