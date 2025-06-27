@@ -30,7 +30,7 @@
       - [`prime issue-density`](#prime-issue-density)
       - [`prime pull-requests`](#prime-pull-requests)
       - [`prime pull-request-spoilage`](#prime-pull-request-spoilage)
-    - [Computing All PRIME VCS Metrics](#computing-all-prime-vcs-metrics)
+    - [Computing All PRIME Metrics](#computing-all-prime-metrics)
     - [Leveraging PRIME SQLite3 Database](#leveraging-prime-sqlite3-database)
   - [Contributing To PRIME](#contributing-to-prime)
     - [Submitting Issues](#submitting-issues)
@@ -363,14 +363,34 @@ options:
 Read the original research paper here: https://doi.org/10.1145/3551349.3559517
 ```
 
-### Computing All PRIME VCS Metrics
+### Computing All PRIME Metrics
+
+> To run all of these in order as a shell script, see
+> [bulk_processing.bash](bulk_processing.bash)
+
+To compute all VCS related metrics:
 
 ```shell
-prime vcs -i $REPO_PATH -o $DB_PATH && \
-prime filesize -i $REPO_PATH -o $DB_PATH && \
-prime project-size -o $DB_PATH && \
-prime project-productivity -o $DB_PATH && \
-prime bus-factor -o $DB_PATH
+prime vcs --input $REPO_PATH --output $DB_PATH && \
+prime filesize --input $REPO_PATH --output $DB_PATH && \
+prime project-size --output $DB_PATH && \
+prime project-productivity --output $DB_PATH && \
+prime bus-factor --output $DB_PATH
+```
+
+To compute all project issue tracker related metrics:
+
+```shell
+prime issues --auth $GH_AUTH_TOKEN --owner $GH_PROJECT_OWNER --name $GH_PROJECT_NAME --output $DB_PATH && \
+prime issue-spoilage --output $DB_PATH
+prime issue-density --output $DB_PATH
+```
+
+To compute all pull request tracker related metrics:
+
+```shell
+prime pull-requests --auth $GH_AUTH_TOKEN --owner $GH_PROJECT_OWNER --name $GH_PROJECT_NAME --output $DB_PATH && \
+prime pull-request-spoilage --output $DB_PATH
 ```
 
 ### Leveraging PRIME SQLite3 Database
