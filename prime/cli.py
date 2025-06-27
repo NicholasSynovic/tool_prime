@@ -7,17 +7,13 @@ Copyright 2025 (C) Nicholas M. Synovic
 
 import importlib.metadata
 from argparse import ArgumentParser, Namespace, _SubParsersAction
-from pathlib import Path
 from typing import Any
 
 import prime
 from prime.api.utils import resolve_path
 
 
-def add_output_argument(
-    parser: ArgumentParser,
-    dest_var: str,
-) -> None:
+def add_output_argument(parser: ArgumentParser, dest_var: str) -> None:
     """
     Add a required output argument to the argument parser.
 
@@ -44,10 +40,7 @@ def add_output_argument(
     )
 
 
-def add_input_argument(
-    parser: ArgumentParser,
-    dest_var: str,
-) -> None:
+def add_input_argument(parser: ArgumentParser, dest_var: str) -> None:
     """
     Add a required input argument to the argument parser.
 
@@ -74,10 +67,7 @@ def add_input_argument(
     )
 
 
-def add_gh_args(
-    parser: ArgumentParser,
-    dest_var: str,
-) -> None:
+def add_gh_args(parser: ArgumentParser, dest_var: str) -> None:
     """
     Add GitHub-related arguments to the argument parser.
 
@@ -177,9 +167,9 @@ class CLI:
         self.project_productivity_subparser()
         self.bus_factor_subparser()
         self.issue_subparser()
-        self.pull_request_subparser()
         self.issue_spoilage_subparser()
         self.issue_density_subparser()
+        self.pull_request_subparser()
 
     def vcs_subparser(self) -> ArgumentParser:
         """
@@ -240,7 +230,7 @@ class CLI:
         project_size_parser: ArgumentParser = self.subparsers.add_parser(
             name="project-size",
             help="Measure the size of project by the lines of code",
-            description="Step 2",
+            description="Step 3",
             prog=f"{prime.PROG} project-size",
             epilog=prime.EPILOG,
         )
@@ -261,7 +251,7 @@ class CLI:
         project_productivity_parser: ArgumentParser = self.subparsers.add_parser(
             name="project-productivity",
             help="Compute project productivity",
-            description="Step 3",
+            description="Step 4",
             prog=f"{prime.PROG} project-productivity",
             epilog=prime.EPILOG,
         )
@@ -284,7 +274,7 @@ class CLI:
         bus_factor_parser: ArgumentParser = self.subparsers.add_parser(
             name="bus-factor",
             help="Compute bus factor",
-            description="Step 4",
+            description="Step 5",
             prog=f"{prime.PROG} bus-factor",
             epilog=prime.EPILOG,
         )
@@ -304,7 +294,7 @@ class CLI:
         issue_parser: ArgumentParser = self.subparsers.add_parser(
             name="issues",
             help="Get issue metadata from a GitHub repository",
-            description="Step 5",
+            description="Step 6",
             prog=f"{prime.PROG} issues",
             epilog=prime.EPILOG,
         )
@@ -313,30 +303,6 @@ class CLI:
         add_output_argument(parser=issue_parser, dest_var="issues")
 
         return issue_parser
-
-    def pull_request_subparser(self) -> ArgumentParser:
-        """
-        Add a subparser for retrieving pull requests from a GitHub repository.
-
-        Returns:
-            ArgumentParser: The subparser for the 'pull-requests' command.
-
-        """
-        pull_requests_parser: ArgumentParser = self.subparsers.add_parser(
-            name="pull-requests",
-            help="Get pull request metadata from a GitHub repository",
-            description="Step 6",
-            prog=f"{prime.PROG} pull-requests",
-            epilog=prime.EPILOG,
-        )
-
-        add_gh_args(parser=pull_requests_parser, dest_var="pull_requests")
-        add_output_argument(
-            parser=pull_requests_parser,
-            dest_var="pull_requests",
-        )
-
-        return pull_requests_parser
 
     def issue_spoilage_subparser(self) -> ArgumentParser:
         """
@@ -383,6 +349,30 @@ class CLI:
         )
 
         return issue_density_parser
+
+    def pull_request_subparser(self) -> ArgumentParser:
+        """
+        Add a subparser for retrieving pull requests from a GitHub repository.
+
+        Returns:
+            ArgumentParser: The subparser for the 'pull-requests' command.
+
+        """
+        pull_requests_parser: ArgumentParser = self.subparsers.add_parser(
+            name="pull-requests",
+            help="Get pull request metadata from a GitHub repository",
+            description="Step 9",
+            prog=f"{prime.PROG} pull-requests",
+            epilog=prime.EPILOG,
+        )
+
+        add_gh_args(parser=pull_requests_parser, dest_var="pull_requests")
+        add_output_argument(
+            parser=pull_requests_parser,
+            dest_var="pull_requests",
+        )
+
+        return pull_requests_parser
 
     def parse_args(self) -> Namespace:
         """
