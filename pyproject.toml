@@ -1,17 +1,41 @@
 [project]
 name = "prime"
 version = "0.1.3"
-description = "Hello World"
+description = "PRocess Internal MEtrics tools (PRIME)"
 authors = [{ name = "Nicholas M. Synovic", email = "nicholas.synovic@gmail.com" }]
 requires-python = "~=3.13"
 readme = "README.md"
 license = "AGPL-3.0-only"
-keywords = ["Template"]
+keywords = [
+    "Empirical Software Engineering",
+    "Software Metrics",
+    "Process Metrics",
+    "Longitudinal Analysis",
+    "Productivity",
+    "Issue Tracking",
+    "Version Control",
+    "Trend Analysis",
+    "Open Source"
+]
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: English",
+    "Operating System :: Unix",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: GNU Affero General Public License v3"
+    "Programming Language :: SQL",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Bug Tracking",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Utilities"
 ]
 dependencies = [
     "gitpython>=3.1.44,<4",
@@ -24,8 +48,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/NicholasSynovic/template_python"
-Repository = "https://github.com/NicholasSynovic/template_python"
+Homepage = "https://github.com/NicholasSynovic/prime"
+Repository = "https://github.com/NicholasSynovic/prime"
 
 [project.scripts]
 prime = "prime.main:main"
