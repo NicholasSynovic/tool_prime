@@ -30,6 +30,7 @@
       - [`prime issue-density`](#prime-issue-density)
       - [`prime pull-requests`](#prime-pull-requests)
       - [`prime pull-request-spoilage`](#prime-pull-request-spoilage)
+    - [Computing All PRIME VCS Metrics](#computing-all-prime-vcs-metrics)
     - [Leveraging PRIME SQLite3 Database](#leveraging-prime-sqlite3-database)
   - [Contributing To PRIME](#contributing-to-prime)
     - [Submitting Issues](#submitting-issues)
@@ -360,6 +361,16 @@ options:
                         Path to output SQLite3
 
 Read the original research paper here: https://doi.org/10.1145/3551349.3559517
+```
+
+### Computing All PRIME VCS Metrics
+
+```shell
+prime vcs -i $REPO_PATH -o $DB_PATH && \
+prime filesize -i $REPO_PATH -o $DB_PATH && \
+prime project-size -o $DB_PATH && \
+prime project-productivity -o $DB_PATH && \
+prime bus-factor -o $DB_PATH
 ```
 
 ### Leveraging PRIME SQLite3 Database
